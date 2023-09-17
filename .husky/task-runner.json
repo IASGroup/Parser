@@ -1,13 +1,43 @@
 {
+   "variables": [
+      {
+         "name": "root-dir",
+         "command": "cmd",
+         "args": ["/c", "dir", "/b"]
+      }
+   ],
    "tasks": [
       {
-         "name": "welcome-message-example",
-         "command": "bash",
-         "args": [ "-c", "echo Husky.Net is awesome!" ],
-         "windows": {
-            "command": "cmd",
-            "args": ["/c", "echo Husky.Net is awesome!" ]
-         }
+         "name": "commit-message-linter",
+         "command": "dotnet",
+         "args": [
+            "husky",
+            "exec",
+            ".husky/csx/commit-lint.csx",
+            "--args",
+            "${args}"
+         ]
+      },
+      {
+         "name": "dotnet-format",
+         "group": "pre-commit",
+         "command": "dotnet",
+         "args": ["format", "./backend/src/"],
+         "include": ["**/*.cs", "**/*.vb"]
+      },
+      {
+         "name": "dotnet-test",
+         "group": "pre-commit",
+         "command": "dotnet",
+         "args": ["test", "./backend/src/"],
+         "include": ["**/*.cs", "**/*.vb"]
+      },
+      {
+         "name": "warning-check",
+         "command": "dotnet",
+         "group": "pre-push",
+         "args": ["build", "./backend/src/", "/warnaserror"],
+         "include": ["**/*.cs", "**/*.vb"]
       }
    ]
 }
