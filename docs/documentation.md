@@ -2,7 +2,7 @@
 ```json
 {
   "url": "https://en.wikipedia.org/wiki/Transhumanism/page/{page}/attribute",
-  "type" 1, // 0 - api, 1 - website_text, 2 - website_tags,  3 - selenium
+  "type": 1, // 0 - api, 1 - website_text, 2 - website_tags,  3 - selenium
   "name": "Спарсить погоду",
   "websiteTagsOptions": {
     "tags": [
