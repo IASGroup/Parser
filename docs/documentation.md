@@ -19,7 +19,7 @@
       }
     ]
   },
-  "apiOptions": {
+  "urlOptions": {
     "requestMethod": "POST", // GET POST PUT DELETE
     "postMethodOptions": {
       "requestBody": "{ 'id': 23 }"
