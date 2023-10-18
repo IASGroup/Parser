@@ -1,4 +1,10 @@
+using DataAccess;
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddConsole();
+
+Dependencies.ConfigureServices(builder.Configuration, builder.Services);
+BussinessLogic.Dependencies.ConfigureServices(builder.Services);
 
 // Add services to the container.
 
@@ -8,6 +14,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+DbInitializer.Initialize(app.Services.CreateScope().ServiceProvider.GetService<AppDbContext>()!);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
