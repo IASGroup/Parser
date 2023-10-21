@@ -26,7 +26,7 @@ public class RabbitMqService : IRabbitMqService
         };
         using var connection = factory.CreateConnection();
         using var channel = connection.CreateModel();
-        channel.QueueDeclare(_rabbitMqOptions.Value.ParserTasksQueryName);
+        channel.QueueDeclare(_rabbitMqOptions.Value.ParserTasksQueryName, exclusive: false, autoDelete: false);
         var body = Encoding.UTF8.GetBytes(json);
         channel.BasicPublish(
             exchange: "",
