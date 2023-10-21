@@ -1,0 +1,39 @@
+{
+	"info": {
+		"_postman_id": "e484384d-ec05-44dd-8c0b-abe65e15c303",
+		"name": "ParserApi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18129580"
+	},
+	"item": [
+		{
+			"name": "CreateTaskFakeApi",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"url\": \"https://jsonplaceholder.typicode.com/todos\",\r\n  \"type\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить фейк апи\",\r\n  \"urlOptions\": {\r\n    \"requestMethod\": \"GET\",\r\n    \"queries\": [],\r\n    \"paths\": [],\r\n    \"headers\": []\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5053/api/parser-tasks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5053",
+					"path": [
+						"api",
+						"parser-tasks"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
