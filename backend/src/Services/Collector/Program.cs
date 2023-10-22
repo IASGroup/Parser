@@ -1,4 +1,6 @@
+using Collector.Contexts;
 using Collector.Options;
+using Collector.ParserTasks;
 using Collector.RabbitMq;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +14,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.Name));
+builder.Services.Configure<DbOptions>(builder.Configuration.GetSection(DbOptions.Name));
 builder.Services.AddHostedService<ConsumerNewParserTaskBackgroundService>();
+builder.Services.AddSingleton<IParserTaskService, ParserTaskService>();
+builder.Services.AddDbContext<AppDbContext>();
 
 var app = builder.Build();
 

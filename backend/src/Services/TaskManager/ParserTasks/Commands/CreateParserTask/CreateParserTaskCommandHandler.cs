@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
+using Core.Entities;
 using MediatR;
 using TaskManager.Contexts;
 using TaskManager.ParserTasks.Contracts;
-using TaskManager.ParserTasks.Contracts.Core;
 using TaskManager.RabbitMq;
 
 namespace TaskManager.ParserTasks.Commands.CreateParserTask;

@@ -1,7 +1,8 @@
 ﻿using System.Text;
 using System.Text.Json;
-using Collector.Contracts.Core;
 using Collector.Options;
+using Collector.ParserTasks;
+using Core.Entities;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -11,21 +12,25 @@ public class ConsumerNewParserTaskBackgroundService : BackgroundService
 {
     private readonly RabbitMqOptions _rabbitMqOptions;
     private readonly ILogger<ConsumerNewParserTaskBackgroundService> _logger;
+    private readonly IParserTaskService _parserTaskService;
     private readonly IConnection _connection;
     private readonly IModel _channel;
 
     public ConsumerNewParserTaskBackgroundService(
         IConfiguration configuration,
-        ILogger<ConsumerNewParserTaskBackgroundService> logger
+        ILogger<ConsumerNewParserTaskBackgroundService> logger,
+        IParserTaskService parserTaskService
     )
     {
         _rabbitMqOptions = configuration.GetSection(RabbitMqOptions.Name).Get<RabbitMqOptions>()!;
         _logger = logger;
+        _parserTaskService = parserTaskService;
         var factory = new ConnectionFactory
         {
             HostName = _rabbitMqOptions.HostName,
             UserName = _rabbitMqOptions.UserName,
-            Password = _rabbitMqOptions.UserPassword
+            Password = _rabbitMqOptions.UserPassword,
+            DispatchConsumersAsync = true
         };
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
@@ -34,14 +39,14 @@ public class ConsumerNewParserTaskBackgroundService : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var consumer = new EventingBasicConsumer(_channel);
-        consumer.Received += (sender, args) =>
+        var consumer = new AsyncEventingBasicConsumer(_channel);
+        consumer.Received += async (sender, args) =>
         {
             var message = Encoding.UTF8.GetString(args.Body.ToArray());
             var parserTask = JsonSerializer.Deserialize<ParserTask>(message);
-            _logger.LogInformation(message);
-            Console.WriteLine("Test");
+            await _parserTaskService.NewTaskCreatedHandler(parserTask);
             _channel.BasicAck(args.DeliveryTag, false);
+            await Task.Yield();
         };
         _channel.BasicConsume(_rabbitMqOptions.ParserTasksQueryName, false, consumer);
         return Task.CompletedTask;

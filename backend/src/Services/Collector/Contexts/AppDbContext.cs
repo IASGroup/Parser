@@ -1,10 +1,10 @@
 ﻿using System.Reflection;
+using Collector.Options;
 using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using TaskManager.Options;
 
-namespace TaskManager.Contexts;
+namespace Collector.Contexts;
 
 public class AppDbContext : DbContext
 {
@@ -15,8 +15,7 @@ public class AppDbContext : DbContext
         _dbOptions = dbOptions;
     }
 
-    public DbSet<ParserTask> ParserTasks { get; set; }
-    public DbSet<ParserTaskType> ParserTaskTypes { get; set; }
+    public DbSet<ParserTaskResult> ParserTaskResults { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

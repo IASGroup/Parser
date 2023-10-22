@@ -1,6 +1,6 @@
-﻿namespace TaskManager.ParserTasks.Contracts.Core;
+﻿namespace Core.Entities;
 
-public class UrlOptions
+public class ParserTaskUrlOptions
 {
     public Guid Id { get; set; }
     public string RequestMethod { get; set; }
