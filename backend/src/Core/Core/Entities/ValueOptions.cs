@@ -1,4 +1,4 @@
-﻿namespace Collector.Contracts.Core;
+﻿namespace Core.Entities;
 
 public class ValueOptions
 {

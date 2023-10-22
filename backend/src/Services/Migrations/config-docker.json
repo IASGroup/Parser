@@ -1,0 +1,9 @@
+﻿{
+  "DbOptions": {
+    "Host": "postgres",
+    "Port": "5432",
+    "DbName": "parserdb",
+    "UserName": "admin",
+    "UserPassword": "admin"
+  }
+}
