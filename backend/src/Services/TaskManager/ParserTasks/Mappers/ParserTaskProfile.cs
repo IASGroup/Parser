@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using Core.Entities;
 using TaskManager.ParserTasks.Commands.CreateParserTask;
 using Create = TaskManager.ParserTasks.Commands.CreateParserTask.ParserTaskForCreation;
-using Core = TaskManager.ParserTasks.Contracts.Core;
+using Path = Core.Entities.Path;
+using Range = Core.Entities.Range;
 
 namespace TaskManager.ParserTasks.Mappers;
 
@@ -9,19 +11,19 @@ public class ParserTaskProfile : Profile
 {
     public ParserTaskProfile()
     {
-        CreateMap<Create.ParseWebsiteTagsOptions, Core.ParseWebsiteTagsOptions>();
-        CreateMap<Create.Tag, Core.Tag>();
-        CreateMap<Create.FindOptions, Core.FindOptions>();
-        CreateMap<Create.TagAttribute, Core.TagAttribute>();
-        CreateMap<Create.UrlOptions, Core.UrlOptions>();
-        CreateMap<Create.PostMethodOptions, Core.PostMethodOptions>();
-        CreateMap<Create.Query, Core.Query>();
-        CreateMap<Create.Path, Core.Path>();
-        CreateMap<Create.Header, Core.Header>();
-        CreateMap<Create.ValueOptions, Core.ValueOptions>();
-        CreateMap<Create.ValueItem, Core.ValueItem>();
-        CreateMap<Create.Range, Core.Range>();
-        CreateMap<CreateParserTaskCommand, Core.ParserTask>()
+        CreateMap<Create.ParseWebsiteTagsOptions, ParserTaskWebsiteTagsOptions>();
+        CreateMap<Create.Tag, ParserTaskWebsiteTag>();
+        CreateMap<Create.FindOptions, FindOptions>();
+        CreateMap<Create.TagAttribute, TagAttribute>();
+        CreateMap<Create.UrlOptions, ParserTaskUrlOptions>();
+        CreateMap<Create.PostMethodOptions, PostMethodOptions>();
+        CreateMap<Create.Query, Query>();
+        CreateMap<Create.Path, Path>();
+        CreateMap<Create.Header, Header>();
+        CreateMap<Create.ValueOptions, ValueOptions>();
+        CreateMap<Create.ValueItem, ValueItem>();
+        CreateMap<Create.Range, Range>();
+        CreateMap<CreateParserTaskCommand, ParserTask>()
             .ForMember(x => x.Type, y => y.Ignore());
     }
 }

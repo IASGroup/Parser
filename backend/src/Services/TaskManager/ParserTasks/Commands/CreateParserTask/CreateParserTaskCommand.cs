@@ -1,6 +1,6 @@
-﻿using MediatR;
+﻿using Core.Entities;
+using MediatR;
 using TaskManager.ParserTasks.Contracts;
-using TaskManager.ParserTasks.Contracts.Core;
 using ParseWebsiteTagsOptions = TaskManager.ParserTasks.Commands.CreateParserTask.ParserTaskForCreation.ParseWebsiteTagsOptions;
 using UrlOptions = TaskManager.ParserTasks.Commands.CreateParserTask.ParserTaskForCreation.UrlOptions;
 

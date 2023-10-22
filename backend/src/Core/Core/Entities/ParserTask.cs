@@ -1,4 +1,4 @@
-﻿namespace TaskManager.ParserTasks.Contracts.Core;
+﻿namespace Core.Entities;
 
 public class ParserTask
 {
@@ -6,8 +6,8 @@ public class ParserTask
     public string Url { get; set; }
     public ParserTaskType Type { get; set; }
     public string Name { get; set; }
-    public ParseWebsiteTagsOptions? WebsiteTagOptions { get; set; }
-    public UrlOptions? UrlOptions { get; set; }
+    public ParserTaskWebsiteTagsOptions? ParserTaskWebsiteTagsOptions { get; set; }
+    public ParserTaskUrlOptions? ParserTaskUrlOptions { get; set; }
 }
 
 public class ParserTaskType

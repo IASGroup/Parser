@@ -1,14 +1,15 @@
-﻿namespace Collector.Contracts.Core;
+﻿namespace Core.Entities;
 
-public class ParseWebsiteTagsOptions
+public class ParserTaskWebsiteTagsOptions
 {
     public Guid Id { get; set; }
-    public IList<Tag> Tags { get; set; }
+    public IList<ParserTaskWebsiteTag> ParserTaskWebsiteTags { get; set; }
 }
 
-public class Tag
+public class ParserTaskWebsiteTag
 {
     public Guid Id { get; set; }
+    public Guid ParserWebsiteTags { get; set; }
     public FindOptions FindOptions { get; set; }
 }
 

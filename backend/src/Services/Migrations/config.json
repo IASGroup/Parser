@@ -1,0 +1,9 @@
+{
+  "DbOptions": {
+    "Host": "127.0.0.1",
+    "Port": "5435",
+    "DbName": "parserdb",
+    "UserName": "admin",
+    "UserPassword": "admin"
+  }
+}

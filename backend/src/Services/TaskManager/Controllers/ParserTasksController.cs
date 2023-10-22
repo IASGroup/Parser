@@ -1,7 +1,7 @@
-﻿using MediatR;
+﻿using Core.Entities;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TaskManager.ParserTasks.Commands.CreateParserTask;
-using TaskManager.ParserTasks.Contracts.Core;
 
 namespace TaskManager.Controllers;
 [ApiController]

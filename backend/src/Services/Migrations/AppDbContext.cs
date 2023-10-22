@@ -2,21 +2,22 @@
 using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using TaskManager.Options;
+using Migrations.Options;
 
-namespace TaskManager.Contexts;
+namespace Migrations;
 
 public class AppDbContext : DbContext
 {
-    private readonly IOptionsSnapshot<DbOptions> _dbOptions;
+    private readonly DbOptions _dbOptions;
 
-    public AppDbContext(DbContextOptions<AppDbContext> options, IOptionsSnapshot<DbOptions> dbOptions) : base(options)
+    public AppDbContext(DbOptions dbOptions)
     {
         _dbOptions = dbOptions;
     }
 
     public DbSet<ParserTask> ParserTasks { get; set; }
     public DbSet<ParserTaskType> ParserTaskTypes { get; set; }
+    public DbSet<ParserTaskResult> ParserTaskResults { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,11 +28,11 @@ public class AppDbContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
-        var connectionString = $"Server={_dbOptions.Value.Host};" +
-            $"Port={_dbOptions.Value.Port};" +
-            $"Database={_dbOptions.Value.DbName};" +
-            $"User Id={_dbOptions.Value.UserName};" +
-            $"Password={_dbOptions.Value.UserPassword};";
+        var connectionString = $"Server={_dbOptions.Host};" +
+                               $"Port={_dbOptions.Port};" +
+                               $"Database={_dbOptions.DbName};" +
+                               $"User Id={_dbOptions.UserName};" +
+                               $"Password={_dbOptions.UserPassword};";
         optionsBuilder.UseNpgsql(connectionString);
     }
 }

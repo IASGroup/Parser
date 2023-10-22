@@ -23,8 +23,6 @@ builder.Services.AddDbContext<AppDbContext>();
 
 var app = builder.Build();
 
-DbInitializer.Initialize(app.Services.CreateScope().ServiceProvider.GetService<AppDbContext>()!);
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
