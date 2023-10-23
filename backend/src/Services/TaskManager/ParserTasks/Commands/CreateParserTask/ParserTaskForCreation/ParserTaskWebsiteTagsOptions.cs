@@ -1,11 +1,11 @@
 ﻿namespace TaskManager.ParserTasks.Commands.CreateParserTask.ParserTaskForCreation;
 
-public class ParseWebsiteTagsOptions
+public class ParserTaskWebsiteTagsOptions
 {
-    public IList<Tag> Tags { get; set; }
+    public IList<ParserTaskWebsiteTag> ParserTaskWebsiteTags { get; set; }
 }
 
-public class Tag
+public class ParserTaskWebsiteTag
 {
     public FindOptions FindOptions { get; set; }
 }

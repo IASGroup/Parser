@@ -6,6 +6,8 @@ public class ParserTask
     public string Url { get; set; }
     public ParserTaskType Type { get; set; }
     public string Name { get; set; }
+    public ParserTaskStatuses Status { get; set; }
+    public int StatusId { get; set; }
     public ParserTaskWebsiteTagsOptions? ParserTaskWebsiteTagsOptions { get; set; }
     public ParserTaskUrlOptions? ParserTaskUrlOptions { get; set; }
 }

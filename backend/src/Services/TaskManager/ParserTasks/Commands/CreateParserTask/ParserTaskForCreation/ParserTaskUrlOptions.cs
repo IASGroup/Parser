@@ -1,6 +1,6 @@
 ﻿namespace TaskManager.ParserTasks.Commands.CreateParserTask.ParserTaskForCreation;
 
-public class UrlOptions
+public class ParserTaskUrlOptions
 {
     public string RequestMethod { get; set; }
     public PostMethodOptions? PostMethodOptions { get; set; }

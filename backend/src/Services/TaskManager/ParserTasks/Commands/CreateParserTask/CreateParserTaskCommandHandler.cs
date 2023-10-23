@@ -33,11 +33,14 @@ public class CreateParserTaskCommandHandler : IRequestHandler<CreateParserTaskCo
             // TODO: Добавить валидацию
             var taskType = _context.ParserTaskTypes.FirstOrDefault(x => x.Id == request.Type);
             if (taskType is null) return Result<ParserTask>.Failure("Тип задачи не найден");
+            var taskStatus = _context.ParserTaskStatuses.FirstOrDefault(x => x.Key == "Created");
+            if (taskStatus is null) return Result<ParserTask>.Failure("Статус задачи не найден");
             var parserTask = _mapper.Map<CreateParserTaskCommand, ParserTask>(request);
             parserTask.Type = taskType;
+            parserTask.Status = taskStatus;
             await _context.AddAsync(parserTask, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
-            _rabbitMqService.SendMessage(parserTask);
+            _rabbitMqService.SendNewTaskMessage(parserTask);
             return Result<ParserTask>.Success(parserTask);
         }
         catch (Exception e)

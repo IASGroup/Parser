@@ -1,6 +1,8 @@
-﻿namespace TaskManager.RabbitMq;
+﻿using Core.Entities;
+
+namespace TaskManager.RabbitMq;
 
 public interface IRabbitMqService
 {
-    void SendMessage<T>(T message);
+    void SendNewTaskMessage(ParserTask newTask);
 }

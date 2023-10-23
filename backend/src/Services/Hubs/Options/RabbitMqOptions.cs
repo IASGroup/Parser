@@ -6,6 +6,5 @@ public class RabbitMqOptions
     public string HostName { get; set; }
     public string UserName { get; set; }
     public string UserPassword { get; set; }
-    public string NewParserTasksQueueName { get; set; }
     public string ParserTaskCollectMessagesQueueName { get; set; }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Collector.Contracts;
 using Collector.Options;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -15,9 +16,9 @@ public class RabbitMqService : IRabbitMqService
         _rabbitMqOptions = rabbitMqOptions;
     }
 
-    public void SendMessage<T>(T message)
+    public void SendParserTaskCollectMessage(ParserTaskCollectMessage parserTaskCollectMessage)
     {
-        var json = JsonSerializer.Serialize(message);
+        var json = JsonSerializer.Serialize(parserTaskCollectMessage);
         var factory = new ConnectionFactory
         {
             HostName = _rabbitMqOptions.Value.HostName,
@@ -26,11 +27,11 @@ public class RabbitMqService : IRabbitMqService
         };
         using var connection = factory.CreateConnection();
         using var channel = connection.CreateModel();
-        channel.QueueDeclare(_rabbitMqOptions.Value.ParserTasksQueryName, exclusive: false, autoDelete: false);
+        channel.QueueDeclare(_rabbitMqOptions.Value.ParserTaskCollectMessagesQueueName, exclusive: false, autoDelete: false);
         var body = Encoding.UTF8.GetBytes(json);
         channel.BasicPublish(
             exchange: "",
-            routingKey: _rabbitMqOptions.Value.ParserTasksQueryName,
+            routingKey: _rabbitMqOptions.Value.ParserTaskCollectMessagesQueueName,
             body: body
         );
     }

@@ -34,7 +34,7 @@ public class ConsumerNewParserTaskBackgroundService : BackgroundService
         };
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
-        _channel.QueueDeclare(_rabbitMqOptions.ParserTasksQueryName, exclusive: false, autoDelete: false);
+        _channel.QueueDeclare(_rabbitMqOptions.NewParserTasksQueueName, exclusive: false, autoDelete: false);
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -48,7 +48,7 @@ public class ConsumerNewParserTaskBackgroundService : BackgroundService
             _channel.BasicAck(args.DeliveryTag, false);
             await Task.Yield();
         };
-        _channel.BasicConsume(_rabbitMqOptions.ParserTasksQueryName, false, consumer);
+        _channel.BasicConsume(_rabbitMqOptions.NewParserTasksQueueName, false, consumer);
         return Task.CompletedTask;
     }
 

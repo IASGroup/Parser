@@ -1,4 +1,5 @@
 using System.Reflection;
+using FluentValidation;
 using TaskManager.Contexts;
 using TaskManager.Options;
 using TaskManager.RabbitMq;
@@ -18,6 +19,7 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(Rab
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection(DbOptions.Name));
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
+builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<IRabbitMqService, RabbitMqService>();
 builder.Services.AddDbContext<AppDbContext>();
 
