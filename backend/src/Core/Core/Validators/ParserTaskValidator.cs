@@ -7,6 +7,6 @@ public class ParserTaskValidator : AbstractValidator<ParserTask>
 {
     public ParserTaskValidator()
     {
-        
+
     }
 }

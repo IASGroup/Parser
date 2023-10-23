@@ -45,10 +45,10 @@ public class ParserTaskService : IParserTaskService
         var rabbitMqService = taskScope.ServiceProvider.GetService<IRabbitMqService>();
         if (!response.IsSuccessStatusCode)
         {
-            rabbitMqService.SendParserTaskCollectMessage(new ()
+            rabbitMqService.SendParserTaskCollectMessage(new()
             {
                 ParserTaskId = newTask.Id,
-                ParserTaskErrorMessage = new ()
+                ParserTaskErrorMessage = new()
                 {
                     ErrorMessage = $"Запрос вернул неуспешный код ответа: {response.StatusCode.ToString()}"
                 }
@@ -56,10 +56,10 @@ public class ParserTaskService : IParserTaskService
             newTask.StatusId = 4;
             dbContext.ParserTasks.Update(newTask);
             await dbContext.SaveChangesAsync();
-            rabbitMqService.SendParserTaskCollectMessage(new ()
+            rabbitMqService.SendParserTaskCollectMessage(new()
             {
                 ParserTaskId = newTask.Id,
-                ParserTaskStatusChangedMessage = new ()
+                ParserTaskStatusChangedMessage = new()
                 {
                     NewTaskStatus = newTask.StatusId
                 }
@@ -76,10 +76,10 @@ public class ParserTaskService : IParserTaskService
         dbContext.ParserTaskResults.Add(newResult);
         newTask.StatusId = 5;
         await dbContext.SaveChangesAsync();
-        rabbitMqService.SendParserTaskCollectMessage(new ()
+        rabbitMqService.SendParserTaskCollectMessage(new()
         {
             ParserTaskId = newTask.Id,
-            ParserTaskStatusChangedMessage = new ()
+            ParserTaskStatusChangedMessage = new()
             {
                 NewTaskStatus = newTask.StatusId
             }
@@ -88,6 +88,6 @@ public class ParserTaskService : IParserTaskService
 
     private async Task NotFoundTaskType(ParserTask newTask)
     {
-        
+
     }
 }

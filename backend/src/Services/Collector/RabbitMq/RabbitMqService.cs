@@ -15,7 +15,7 @@ public class RabbitMqService : IRabbitMqService
     {
         _rabbitMqOptions = rabbitMqOptions;
     }
-    
+
     public void SendParserTaskCollectMessage(ParserTaskCollectMessage parserTaskCollectMessage)
     {
         var json = JsonSerializer.Serialize(parserTaskCollectMessage);

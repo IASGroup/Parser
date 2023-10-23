@@ -36,7 +36,7 @@ public class ConsumerParserTaskCollectMessagesBackgroundService : BackgroundServ
         _channel = _connection.CreateModel();
         _channel.QueueDeclare(_rabbitMqOptions.ParserTaskCollectMessagesQueueName, exclusive: false, autoDelete: false);
     }
-    
+
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var consumer = new AsyncEventingBasicConsumer(_channel);
