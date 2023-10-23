@@ -17,6 +17,7 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(Rab
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection(DbOptions.Name));
 builder.Services.AddHostedService<ConsumerNewParserTaskBackgroundService>();
 builder.Services.AddSingleton<IParserTaskService, ParserTaskService>();
+builder.Services.AddScoped<IRabbitMqService, RabbitMqService>();
 builder.Services.AddDbContext<AppDbContext>();
 
 var app = builder.Build();

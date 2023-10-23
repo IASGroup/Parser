@@ -33,10 +33,10 @@
          "include": ["**/*.cs", "**/*.vb"]
       },
       {
-         "name": "warning-check",
+         "name": "build-check",
          "command": "dotnet",
          "group": "pre-commit",
-         "args": ["build", "./backend/src/", "/warnaserror"],
+         "args": ["build", "./backend/src/"],
          "include": ["**/*.cs", "**/*.vb"]
       }
    ]

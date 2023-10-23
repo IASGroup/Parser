@@ -11,11 +11,11 @@ public class ParserTaskProfile : Profile
 {
     public ParserTaskProfile()
     {
-        CreateMap<Create.ParseWebsiteTagsOptions, ParserTaskWebsiteTagsOptions>();
-        CreateMap<Create.Tag, ParserTaskWebsiteTag>();
+        CreateMap<Create.ParserTaskWebsiteTagsOptions, ParserTaskWebsiteTagsOptions>();
+        CreateMap<Create.ParserTaskWebsiteTag, ParserTaskWebsiteTag>();
         CreateMap<Create.FindOptions, FindOptions>();
         CreateMap<Create.TagAttribute, TagAttribute>();
-        CreateMap<Create.UrlOptions, ParserTaskUrlOptions>();
+        CreateMap<Create.ParserTaskUrlOptions, ParserTaskUrlOptions>();
         CreateMap<Create.PostMethodOptions, PostMethodOptions>();
         CreateMap<Create.Query, Query>();
         CreateMap<Create.Path, Path>();
