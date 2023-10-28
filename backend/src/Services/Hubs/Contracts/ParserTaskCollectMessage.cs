@@ -9,7 +9,7 @@ public class ParserTaskCollectMessage
 
 public class ParserTaskErrorMessage
 {
-    public string ErrorMessage { get; set; }
+    public string ErrorMessage { get; set; } = null!;
 }
 
 public class ParserTaskStatusChangedMessage

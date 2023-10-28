@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
-using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Share.Tables;
 using TaskManager.Options;
 
 namespace TaskManager.Contexts;

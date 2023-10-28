@@ -2,9 +2,9 @@
 using System.Text.Json;
 using Collector.Options;
 using Collector.ParserTasks;
-using Core.Entities;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Share.RabbitMessages;
 
 namespace Collector.RabbitMq;
 
@@ -42,11 +42,23 @@ public class ConsumerNewParserTaskBackgroundService : BackgroundService
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.Received += async (sender, args) =>
         {
-            var message = Encoding.UTF8.GetString(args.Body.ToArray());
-            var parserTask = JsonSerializer.Deserialize<ParserTask>(message);
-            await _parserTaskService.NewTaskCreatedHandler(parserTask);
-            _channel.BasicAck(args.DeliveryTag, false);
-            await Task.Yield();
+            try
+            {
+                var message = Encoding.UTF8.GetString(args.Body.ToArray());
+                var parserTask = JsonSerializer.Deserialize<NewParserTaskMessage>(message);
+                await _parserTaskService.NewTaskCreatedHandler(parserTask!);
+                _channel.BasicAck(args.DeliveryTag, false);
+                await Task.Yield();
+            }
+            catch (Exception e)
+            {
+                var errorMessage = "Произошла ошибка при получении сообщения";
+                _logger.LogError(
+                    exception: e,
+                    message: errorMessage,
+                    args: new { sender, args }
+                );
+            }
         };
         _channel.BasicConsume(_rabbitMqOptions.NewParserTasksQueueName, false, consumer);
         return Task.CompletedTask;

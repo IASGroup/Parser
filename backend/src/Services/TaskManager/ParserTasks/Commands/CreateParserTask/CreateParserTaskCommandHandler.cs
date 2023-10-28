@@ -1,13 +1,16 @@
 ﻿using AutoMapper;
-using Core.Entities;
 using MediatR;
+using Share.RabbitMessages;
+using Share.Tables;
 using TaskManager.Contexts;
+using TaskManager.ParserTasks.Commands.CreateParserTask.Request;
+using TaskManager.ParserTasks.Commands.CreateParserTask.Response;
 using TaskManager.ParserTasks.Contracts;
 using TaskManager.RabbitMq;
 
 namespace TaskManager.ParserTasks.Commands.CreateParserTask;
 
-public class CreateParserTaskCommandHandler : IRequestHandler<CreateParserTaskCommand, Result<ParserTask>>
+public class CreateParserTaskCommandHandler : IRequestHandler<CreateParserTaskCommand, Result<CreateParserTaskResponseDto>>
 {
     private readonly AppDbContext _context;
     private readonly ILogger<CreateParserTaskCommandHandler> _logger;
@@ -26,22 +29,23 @@ public class CreateParserTaskCommandHandler : IRequestHandler<CreateParserTaskCo
         _mapper = mapper;
         _rabbitMqService = rabbitMqService;
     }
-    public async Task<Result<ParserTask>> Handle(CreateParserTaskCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CreateParserTaskResponseDto>> Handle(CreateParserTaskCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            // TODO: Добавить валидацию
-            var taskType = _context.ParserTaskTypes.FirstOrDefault(x => x.Id == request.Type);
-            if (taskType is null) return Result<ParserTask>.Failure("Тип задачи не найден");
+            var taskType = _context.ParserTaskTypes.FirstOrDefault(x => x.Id == request.TypeId);
+            if (taskType is null) return Result<CreateParserTaskResponseDto>.Failure("Тип задачи не найден");
             var taskStatus = _context.ParserTaskStatuses.FirstOrDefault(x => x.Key == "Created");
-            if (taskStatus is null) return Result<ParserTask>.Failure("Статус задачи не найден");
+            if (taskStatus is null) return Result<CreateParserTaskResponseDto>.Failure("Статус задачи не найден");
             var parserTask = _mapper.Map<CreateParserTaskCommand, ParserTask>(request);
             parserTask.Type = taskType;
             parserTask.Status = taskStatus;
             await _context.AddAsync(parserTask, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
-            _rabbitMqService.SendNewTaskMessage(parserTask);
-            return Result<ParserTask>.Success(parserTask);
+            var message = _mapper.Map<ParserTask, NewParserTaskMessage>(parserTask);
+            _rabbitMqService.SendNewTaskMessage(message);
+            var response = _mapper.Map<ParserTask, CreateParserTaskResponseDto>(parserTask);
+            return Result<CreateParserTaskResponseDto>.Success(response);
         }
         catch (Exception e)
         {
@@ -51,7 +55,7 @@ public class CreateParserTaskCommandHandler : IRequestHandler<CreateParserTaskCo
                 exception: e,
                 args: new { request }
             );
-            return Result<ParserTask>.Failure(errorMessage);
+            return Result<CreateParserTaskResponseDto>.Failure(errorMessage);
         }
     }
 }

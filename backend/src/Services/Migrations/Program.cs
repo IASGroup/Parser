@@ -1,13 +1,13 @@
-﻿using Core.Entities;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Migrations;
 using Migrations.Options;
+using Share.Tables;
 
 var inDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
 Console.WriteLine(inDocker);
 var dicrectory = inDocker ?
     Directory.GetCurrentDirectory()
-    : Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
+    : Directory.GetParent(Directory.GetCurrentDirectory())!.Parent!.Parent!.FullName;
 var configPath = inDocker ?
     $"{dicrectory}/config-docker.json"
     : $"{dicrectory}/config.json";

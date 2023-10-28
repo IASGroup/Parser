@@ -1,8 +1,8 @@
-﻿using Core.Entities;
+﻿using Share.RabbitMessages;
 
 namespace Collector.ParserTasks;
 
 public interface IParserTaskService
 {
-    Task NewTaskCreatedHandler(ParserTask newTask);
+    Task NewTaskCreatedHandler(NewParserTaskMessage newTask);
 }

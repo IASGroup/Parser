@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
-using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Migrations.Options;
+using Share.Tables;
 
 namespace Migrations;
 
