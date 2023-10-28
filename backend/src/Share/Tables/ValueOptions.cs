@@ -15,7 +15,7 @@ public sealed class ValueItem
     public Guid Id { get; set; }
     public string Value { get; set; } = null!;
     public Guid ValueOptionsId { get; set; }
-    
+
     public ValueOptions? ValueOptions { get; set; }
 }
 
