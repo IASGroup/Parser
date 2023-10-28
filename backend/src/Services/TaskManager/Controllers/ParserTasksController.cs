@@ -1,7 +1,9 @@
-﻿using Core.Entities;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Share.Tables;
 using TaskManager.ParserTasks.Commands.CreateParserTask;
+using TaskManager.ParserTasks.Commands.CreateParserTask.Request;
+using TaskManager.ParserTasks.Commands.CreateParserTask.Response;
 
 namespace TaskManager.Controllers;
 [ApiController]
@@ -16,7 +18,7 @@ public class ParserTasksController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ParserTask>> CreateParserTaskAsync([FromBody] CreateParserTaskCommand createCommand)
+    public async Task<ActionResult<CreateParserTaskResponseDto>> CreateParserTaskAsync([FromBody] CreateParserTaskCommand createCommand)
     {
         var createCommandResult = await _mediator.Send(createCommand);
         return createCommandResult.IsSuccess ?

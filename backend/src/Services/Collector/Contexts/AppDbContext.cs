@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
 using Collector.Options;
-using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Share.Tables;
 
 namespace Collector.Contexts;
 

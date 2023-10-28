@@ -1,9 +1,11 @@
 ﻿using System.Text;
 using System.Text.Json;
-using Core.Entities;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using Share.RabbitMessages;
+using Share.Tables;
 using TaskManager.Options;
+using TaskManager.ParserTasks.Commands.CreateParserTask.Response;
 
 namespace TaskManager.RabbitMq;
 
@@ -16,7 +18,7 @@ public class RabbitMqService : IRabbitMqService
         _rabbitMqOptions = rabbitMqOptions;
     }
 
-    public void SendNewTaskMessage(ParserTask newTask)
+    public void SendNewTaskMessage(NewParserTaskMessage newTask)
     {
         var json = JsonSerializer.Serialize(newTask);
         var factory = new ConnectionFactory

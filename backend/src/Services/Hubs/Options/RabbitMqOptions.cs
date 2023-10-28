@@ -3,8 +3,8 @@
 public class RabbitMqOptions
 {
     public static string Name = nameof(RabbitMqOptions);
-    public string HostName { get; set; }
-    public string UserName { get; set; }
-    public string UserPassword { get; set; }
-    public string ParserTaskCollectMessagesQueueName { get; set; }
+    public string HostName { get; set; } = null!;
+    public string UserName { get; set; } = null!;
+    public string UserPassword { get; set; } = null!;
+    public string ParserTaskCollectMessagesQueueName { get; set; } = null!;
 }

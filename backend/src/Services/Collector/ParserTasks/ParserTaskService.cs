@@ -1,12 +1,17 @@
 ﻿using Collector.Contexts;
+using Collector.Contracts;
 using Collector.RabbitMq;
-using Core.Entities;
+using Microsoft.EntityFrameworkCore;
+using Share.RabbitMessages;
+using Share.Tables;
+using ParserTaskStatuses = Share.Contracts.ParserTaskStatuses;
 
 namespace Collector.ParserTasks;
 
 public class ParserTaskService : IParserTaskService
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<ParserTaskService> _logger;
 
     private readonly Dictionary<string, HttpMethod> _httpMethods = new()
     {
@@ -17,44 +22,84 @@ public class ParserTaskService : IParserTaskService
         {"PATCH", HttpMethod.Patch}
     };
 
-    public ParserTaskService(IServiceProvider serviceProvider)
+    public ParserTaskService(IServiceProvider serviceProvider, ILogger<ParserTaskService> logger)
     {
         _serviceProvider = serviceProvider;
+        _logger = logger;
     }
 
-    public async Task NewTaskCreatedHandler(ParserTask newTask)
+    public async Task NewTaskCreatedHandler(NewParserTaskMessage newTask)
     {
-        await (newTask.Type.Id switch
+        await (newTask.TypeId switch
         {
             1 => ParseApiHandler(newTask),
             _ => NotFoundTaskType(newTask)
         });
     }
 
-    private async Task ParseApiHandler(ParserTask newTask)
+    private async Task ParseApiHandler(NewParserTaskMessage newTask)
     {
-        using var taskScope = _serviceProvider.CreateScope();
-        var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
-        using var httpClinet = new HttpClient();
-        var request = new HttpRequestMessage()
+        try
         {
-            Method = _httpMethods[newTask.ParserTaskUrlOptions.RequestMethod],
-            RequestUri = new Uri(newTask.Url)
-        };
-        var response = await httpClinet.SendAsync(request);
-        var rabbitMqService = taskScope.ServiceProvider.GetService<IRabbitMqService>();
-        if (!response.IsSuccessStatusCode)
-        {
-            rabbitMqService.SendParserTaskCollectMessage(new()
+            _logger.LogInformation($"Начало задачи парсинга: {newTask.Id}");
+            using var taskScope = _serviceProvider.CreateScope();
+            var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
+            var rabbitMqService = taskScope.ServiceProvider.GetService<IRabbitMqService>();
+
+            if (dbContext is null || rabbitMqService is null)
+            {
+                _logger.LogError(
+                    message: "Необходимый сервис не найден",
+                    args: new { dbContext, rabbitMqService }
+                );
+                return;
+            }
+            using var httpClient = new HttpClient();
+            var request = new HttpRequestMessage()
+            {
+                Method = _httpMethods[newTask.ParserTaskUrlOptions!.RequestMethod],
+                RequestUri = new Uri(newTask.Url)
+            };
+            var response = await httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                rabbitMqService.SendParserTaskCollectMessage(new()
+                {
+                    ParserTaskId = newTask.Id,
+                    ParserTaskErrorMessage = new ParserTaskErrorMessage
+                    {
+                        ErrorMessage = $"Запрос вернул неуспешный код ответа: {response.StatusCode.ToString()}"
+                    }
+                });
+                await dbContext.ParserTasks
+                    .Where(x => x.Id == newTask.Id)
+                    .ExecuteUpdateAsync(x => x.SetProperty(
+                        y => y.StatusId, (int)ParserTaskStatuses.Error)
+                    );
+                await dbContext.SaveChangesAsync();
+                rabbitMqService.SendParserTaskCollectMessage(new()
+                {
+                    ParserTaskId = newTask.Id,
+                    ParserTaskStatusChangedMessage = new()
+                    {
+                        NewTaskStatus = newTask.StatusId
+                    }
+                });
+                return;
+            }
+
+            var contentString = await response.Content.ReadAsStringAsync();
+            var newResult = new ParserTaskResult
             {
                 ParserTaskId = newTask.Id,
-                ParserTaskErrorMessage = new()
-                {
-                    ErrorMessage = $"Запрос вернул неуспешный код ответа: {response.StatusCode.ToString()}"
-                }
-            });
-            newTask.StatusId = 4;
-            dbContext.ParserTasks.Update(newTask);
+                Content = contentString
+            };
+            dbContext.ParserTaskResults.Add(newResult);
+            await dbContext.ParserTasks
+                .Where(x => x.Id == newTask.Id)
+                .ExecuteUpdateAsync(x => x.SetProperty(
+                    y => y.StatusId, (int)ParserTaskStatuses.Finished)
+                );
             await dbContext.SaveChangesAsync();
             rabbitMqService.SendParserTaskCollectMessage(new()
             {
@@ -64,30 +109,20 @@ public class ParserTaskService : IParserTaskService
                     NewTaskStatus = newTask.StatusId
                 }
             });
-            return;
+            _logger.LogInformation($"Конец задачи парсинга: {newTask.Id}");
         }
-
-        var contentString = await response.Content.ReadAsStringAsync();
-        var newResult = new ParserTaskResult
+        catch (Exception e)
         {
-            ParserTaskId = newTask.Id,
-            Content = contentString
-        };
-        dbContext.ParserTaskResults.Add(newResult);
-        newTask.StatusId = 5;
-        await dbContext.SaveChangesAsync();
-        rabbitMqService.SendParserTaskCollectMessage(new()
-        {
-            ParserTaskId = newTask.Id,
-            ParserTaskStatusChangedMessage = new()
-            {
-                NewTaskStatus = newTask.StatusId
-            }
-        });
+            var errorMessage = $"Ошибка при выполнении задачи парсинга: {newTask.Name}";
+            _logger.LogError(
+                exception: e,
+                message: errorMessage,
+                args: new { newTask }
+            );
+        }
     }
 
-    private async Task NotFoundTaskType(ParserTask newTask)
+    private async Task NotFoundTaskType(NewParserTaskMessage newTask)
     {
-
     }
 }
