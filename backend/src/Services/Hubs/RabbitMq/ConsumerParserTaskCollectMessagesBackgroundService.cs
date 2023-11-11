@@ -1,8 +1,8 @@
 ﻿using System.Text;
 using System.Text.Json;
-using Collector.Options;
 using Hubs.Contracts;
 using Hubs.Hubs;
+using Hubs.Options;
 using Microsoft.AspNetCore.SignalR;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;

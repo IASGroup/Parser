@@ -7,7 +7,6 @@ using Share.Contracts;
 using Share.RabbitMessages;
 using Share.Tables;
 using ParserTaskStatuses = Share.Contracts.ParserTaskStatuses;
-using ValueOptions = Share.RabbitMessages.ValueOptions;
 
 namespace Collector.ParserTasks;
 
@@ -90,7 +89,7 @@ public class ParserTaskService : IParserTaskService
                     });
                     dbContext.ParserTaskPartialResults.Add(new ParserTaskPartialResult()
                     {
-                        StatusId = (int) ParserTaskPartialResultStatuses.Error,
+                        StatusId = (int)ParserTaskPartialResultStatuses.Error,
                         Url = url,
                         Content = responseContent,
                         ParserTaskId = newTask.Id
@@ -155,7 +154,7 @@ public class ParserTaskService : IParserTaskService
     {
         var paths = message.ParserTaskUrlOptions!.Paths!.Select(x =>
         {
-            if (x.ValueOptions.Value is not null) return new []
+            if (x.ValueOptions.Value is not null) return new[]
             {
                 new UrlPart()
                 {
@@ -175,7 +174,7 @@ public class ParserTaskService : IParserTaskService
             }
 
             return Enumerable.Range(
-                    start: x.ValueOptions.Range!.Start, 
+                    start: x.ValueOptions.Range!.Start,
                     count: x.ValueOptions.Range.End - x.ValueOptions.Range.Start + 1
                 )
                 .Select(y => new UrlPart()
@@ -185,10 +184,10 @@ public class ParserTaskService : IParserTaskService
                     PartType = UrlPartTypes.Path
                 }).ToArray();
         });
-        
+
         var queries = message.ParserTaskUrlOptions!.Queries!.Select(x =>
         {
-            if (x.ValueOptions.Value is not null) return new []
+            if (x.ValueOptions.Value is not null) return new[]
             {
                 new UrlPart()
                 {
@@ -208,7 +207,7 @@ public class ParserTaskService : IParserTaskService
             }
 
             return Enumerable.Range(
-                    start: x.ValueOptions.Range!.Start, 
+                    start: x.ValueOptions.Range!.Start,
                     count: x.ValueOptions.Range.End - x.ValueOptions.Range.Start + 1
                 )
                 .Select(y => new UrlPart()
@@ -218,16 +217,16 @@ public class ParserTaskService : IParserTaskService
                     PartType = UrlPartTypes.Query
                 }).ToArray();
         });
-        
+
         var parts = paths.Concat(queries).ToArray();
-        
+
         var indexes = new int[parts.Length];
         var currentArrayIndex = indexes.Length - 1;
-        for (var i = 0; i < indexes.Length; i ++)
+        for (var i = 0; i < indexes.Length; i++)
         {
             indexes[i] = 0;
         }
-        
+
         bool IsIndexesEnds()
         {
             for (var i = 0; i < indexes.Length; i++)
@@ -260,7 +259,7 @@ public class ParserTaskService : IParserTaskService
 
             return defaultPath;
         }
-        
+
         while (!IsIndexesEnds())
         {
             var subArrayIndex = indexes[currentArrayIndex];

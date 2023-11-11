@@ -2,6 +2,6 @@
 
 public enum ParserTaskPartialResultStatuses
 {
-	Success = 1,
-	Error = 2
+    Success = 1,
+    Error = 2
 }

@@ -1,4 +1,4 @@
-﻿namespace Collector.Options;
+﻿namespace Hubs.Options;
 
 public class RabbitMqOptions
 {
