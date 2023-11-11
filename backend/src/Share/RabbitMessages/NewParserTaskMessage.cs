@@ -66,14 +66,14 @@ public class Header
 }
 public class ValueOptions
 {
-    public Range Range { get; set; } = null!;
-    public IEnumerable<ValueItem> Values { get; set; } = null!;
-    public string Value { get; set; } = null!;
+    public Range? Range { get; set; }
+    public IEnumerable<ValueItem>? Values { get; set; }
+    public string? Value { get; set; }
 }
 
 public class ValueItem
 {
-    public string Value { get; set; }
+    public string Value { get; set; } = null!;
 }
 
 public class Range

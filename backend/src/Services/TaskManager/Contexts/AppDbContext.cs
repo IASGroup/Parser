@@ -15,9 +15,9 @@ public class AppDbContext : DbContext
         _dbOptions = dbOptions;
     }
 
-    public DbSet<ParserTask> ParserTasks { get; set; }
-    public DbSet<ParserTaskType> ParserTaskTypes { get; set; }
-    public DbSet<ParserTaskStatuses> ParserTaskStatuses { get; set; }
+    public DbSet<ParserTask> ParserTasks { get; set; } = null!;
+    public DbSet<ParserTaskType> ParserTaskTypes { get; set; } = null!;
+    public DbSet<ParserTaskStatuses> ParserTaskStatuses { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

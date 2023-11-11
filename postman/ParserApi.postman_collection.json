@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "e484384d-ec05-44dd-8c0b-abe65e15c303",
+		"_postman_id": "3b95c142-43b9-4ed2-898b-8908b91c3ff3",
 		"name": "ParserApi",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "18129580"
@@ -13,7 +13,36 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"url\": \"https://jsonplaceholder.typicode.com/todos\",\r\n  \"type\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить фейк апи\",\r\n  \"urlOptions\": {\r\n    \"requestMethod\": \"GET\",\r\n    \"queries\": [],\r\n    \"paths\": [],\r\n    \"headers\": []\r\n  }\r\n}",
+					"raw": "{\r\n  \"url\": \"https://jsonplaceholder.typicode.com/todos/{todo}\",\r\n  \"typeId\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить фейк апи\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\",\r\n    \"paths\": [\r\n        {\r\n            \"name\": \"todo\",\r\n            \"valueOptions\": {\r\n                \"range\": {\r\n                    \"start\": 1,\r\n                    \"end\": 20\r\n                }\r\n            }\r\n        }\r\n    ]\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5053/api/parser-tasks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5053",
+					"path": [
+						"api",
+						"parser-tasks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CreateTaskParseWebsiteTags",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"url\": \"https://en.wikipedia.org/wiki/IAS_machine\",\r\n  \"typeId\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ссылки\",\r\n  \"parserTaskWebsiteTagsOptions\": {\r\n    \"parserTaskWebsiteTags\": [\r\n        {\r\n            \"findOptions\": {\r\n                \"name\": \"a\"\r\n            }\r\n        }\r\n    ]\r\n  },\r\n  \"parserTaskUrlOptions\": {\r\n      \"requestMethod\": \"GET\"\r\n  }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

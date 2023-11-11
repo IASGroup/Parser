@@ -1,4 +1,5 @@
 using Collector.Contexts;
+using Collector.Contracts;
 using Collector.Options;
 using Collector.ParserTasks;
 using Collector.RabbitMq;
@@ -19,6 +20,7 @@ builder.Services.AddHostedService<ConsumerNewParserTaskBackgroundService>();
 builder.Services.AddSingleton<IParserTaskService, ParserTaskService>();
 builder.Services.AddScoped<IRabbitMqService, RabbitMqService>();
 builder.Services.AddDbContext<AppDbContext>();
+builder.Services.AddHttpClient(HttpClientNames.Collector);
 
 var app = builder.Build();
 
