@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Task } from "../../../../shared/api";
+import { Task } from "@/entities/tasks";
 
 const { item } = defineProps<{ item: Task }>();
 </script>

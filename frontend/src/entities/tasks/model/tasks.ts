@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, reactive } from "vue";
-import { Task } from "@/shared/api";
+import { Task } from "./models";
 
 export const useTaskStore = defineStore("tasks", () => {
   const tasks = ref<Array<Task>>([]);
