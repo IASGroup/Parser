@@ -1,2 +1,2 @@
-export * from "./card-item";
-export * from "./card-card-details"
+export * from "./task-item";
+export * from "./task-details"
