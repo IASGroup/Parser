@@ -17,8 +17,9 @@ public class AppDbContext : DbContext
 
     public DbSet<ParserTask> ParserTasks { get; set; }
     public DbSet<ParserTaskType> ParserTaskTypes { get; set; }
-    public DbSet<ParserTaskResult> ParserTaskResults { get; set; }
+    public DbSet<ParserTaskPartialResult> ParserTaskPartialResults { get; set; }
     public DbSet<ParserTaskStatuses> ParserTaskStatuses { get; set; }
+    public DbSet<ParserTaskPartialResultStatus> ParserTaskPartialResultStatuses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

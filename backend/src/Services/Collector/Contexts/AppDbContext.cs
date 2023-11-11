@@ -15,7 +15,7 @@ public class AppDbContext : DbContext
         _dbOptions = dbOptions;
     }
 
-    public DbSet<ParserTaskResult> ParserTaskResults { get; set; }
+    public DbSet<ParserTaskPartialResult> ParserTaskPartialResults { get; set; }
     public DbSet<ParserTaskStatuses> ParserTaskStatuses { get; set; }
     public DbSet<ParserTask> ParserTasks { get; set; }
 

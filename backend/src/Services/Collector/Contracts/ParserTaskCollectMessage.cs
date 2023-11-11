@@ -9,6 +9,7 @@ public class ParserTaskCollectMessage
 
 public class ParserTaskErrorMessage
 {
+    public string Url { get; set; }
     public string ErrorMessage { get; set; }
 }
 

@@ -4,7 +4,7 @@ public sealed class ValueOptions
 {
     public Guid Id { get; set; }
     public Guid? RangeId { get; set; }
-    public string Value { get; set; } = null!;
+    public string? Value { get; set; }
 
     public Range? Range { get; set; }
     public IEnumerable<ValueItem>? Values { get; set; }
