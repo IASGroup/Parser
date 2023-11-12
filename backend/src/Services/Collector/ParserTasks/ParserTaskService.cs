@@ -117,7 +117,7 @@ public class ParserTaskService : IParserTaskService
                 ParserTaskId = newTask.Id,
                 ParserTaskStatusChangedMessage = new()
                 {
-                    NewTaskStatus = newTask.StatusId
+                    NewTaskStatus = (int)ParserTaskStatuses.Finished
                 }
             });
             _logger.LogInformation($"Конец задачи парсинга: {newTask.Id}");
