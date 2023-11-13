@@ -31,7 +31,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 		_parserTaskUtilService = parserTaskUtilService;
 	}
 
-	public async Task Handle(ParserTask parserTaskInAction)
+	public async Task Handle(ParserTask parserTaskInAction, CancellationToken cancellationToken)
 	{
 		using var taskScope = _serviceProvider.CreateScope();
 		var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
@@ -40,9 +40,14 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 		if (dbContext is null || rabbitMqService is null)
 		{
 			_logger.LogError(
-				message: "Необходимый сервис не найден",
-				args: new { dbContext, rabbitMqService }
+				message: "Необходимый сервис не найден"
 			);
+			return;
+		}
+
+		if (cancellationToken.IsCancellationRequested)
+		{
+			await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
 			return;
 		}
 
@@ -53,9 +58,14 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 			await dbContext.ParserTasks
 				.Where(x => x.Id == parserTaskInAction.Id)
 				.ExecuteUpdateAsync(x => x.SetProperty(
-					y => y.StatusId, (int) ParserTaskStatuses.InProgress)
+					y => y.StatusId, (int) ParserTaskStatuses.InProgress),
+					cancellationToken: cancellationToken
 				);
-
+			if (cancellationToken.IsCancellationRequested)
+			{
+				await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
+				return;
+			}
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
@@ -64,15 +74,32 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 					NewTaskStatus = (int) ParserTaskStatuses.InProgress
 				}
 			});
-			foreach (var url in _parserTaskUtilService.GetParserTaskUrls(parserTaskInAction))
+			if (cancellationToken.IsCancellationRequested)
 			{
+				await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
+				return;
+			}
+
+			var allUrls = _parserTaskUtilService.GetParserTaskUrls(parserTaskInAction).ToList();
+			var handledUrls = await dbContext.ParserTaskPartialResults
+				.Where(x => x.ParserTaskId == parserTaskInAction.Id && x.Url != null)
+				.Select(x => x.Url!)
+				.ToListAsync(CancellationToken.None);
+			var needToHandleUrls = allUrls.Except(handledUrls);
+			foreach (var url in needToHandleUrls)
+			{
+				if (cancellationToken.IsCancellationRequested)
+				{
+					await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
+					return;
+				}
 				var request = new HttpRequestMessage
 				{
 					Method = _parserTaskUtilService.GetHttpMethodByName(parserTaskInAction.ParserTaskUrlOptions!.RequestMethod),
 					RequestUri = new Uri(url)
 				};
-				var response = await _httpClient.SendAsync(request);
-				var responseContent = await response.Content.ReadAsStringAsync();
+				var response = await _httpClient.SendAsync(request, cancellationToken);
+				var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 				if (!response.IsSuccessStatusCode)
 				{
 					rabbitMqService.SendParserTaskCollectMessage(new()
@@ -82,7 +109,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 						{
 							ErrorMessage = JsonSerializer.Serialize(new
 							{
-								StatusCode = response.StatusCode,
+								response.StatusCode,
 								Content = responseContent
 							}),
 							Url = url
@@ -95,7 +122,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 						Content = responseContent,
 						ParserTaskId = parserTaskInAction.Id
 					});
-					await dbContext.SaveChangesAsync();
+					await dbContext.SaveChangesAsync(cancellationToken);
 					return;
 				}
 				var newResult = new ParserTaskPartialResult
@@ -106,12 +133,13 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 					Content = responseContent
 				};
 				dbContext.ParserTaskPartialResults.Add(newResult);
-				await dbContext.SaveChangesAsync();
+				await dbContext.SaveChangesAsync(cancellationToken);
 			}
 			await dbContext.ParserTasks
 				.Where(x => x.Id == parserTaskInAction.Id)
 				.ExecuteUpdateAsync(x => x.SetProperty(
-					y => y.StatusId, (int) ParserTaskStatuses.Finished)
+					y => y.StatusId, (int) ParserTaskStatuses.Finished),
+					cancellationToken: cancellationToken
 				);
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
@@ -130,7 +158,8 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 			await dbContext.ParserTasks
 				.Where(x => x.Id == parserTaskInAction.Id)
 				.ExecuteUpdateAsync(x => x.SetProperty(
-					y => y.StatusId, (int) ParserTaskStatuses.Error)
+					y => y.StatusId, (int) ParserTaskStatuses.Error),
+					cancellationToken: CancellationToken.None
 				);
 
 			rabbitMqService.SendParserTaskCollectMessage(new()
@@ -152,5 +181,27 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 				args: new { parserTaskInAction }
 			);
 		}
+	}
+
+	private async Task PauseAsync(
+		AppDbContext dbContext,
+		ParserTask parserTaskInAction,
+		IRabbitMqService rabbitMqService
+	)
+	{
+		await dbContext.ParserTasks
+			.Where(x => x.Id == parserTaskInAction.Id)
+			.ExecuteUpdateAsync(x => x.SetProperty(
+				y => y.StatusId, (int) ParserTaskStatuses.Paused)
+			);
+
+		rabbitMqService.SendParserTaskCollectMessage(new()
+		{
+			ParserTaskId = parserTaskInAction.Id,
+			ParserTaskStatusChangedMessage = new()
+			{
+				NewTaskStatus = (int) ParserTaskStatuses.Paused
+			}
+		});
 	}
 }
