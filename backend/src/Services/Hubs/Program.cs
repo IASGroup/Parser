@@ -1,13 +1,13 @@
-using Hubs.Hubs;
+﻿using Hubs.Hubs;
 using Hubs.RabbitMq;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(builder =>
-    {
-        builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
-    });
+	options.AddDefaultPolicy(builder =>
+	{
+		builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+	});
 });
 builder.Services.AddHostedService<ConsumerParserTaskCollectMessagesBackgroundService>();
 builder.Services.AddSignalR();

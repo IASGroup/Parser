@@ -2,5 +2,5 @@
 
 public interface IDbInitializer
 {
-    void Initialize(AppDbContext context);
+	void Initialize(AppDbContext context);
 }

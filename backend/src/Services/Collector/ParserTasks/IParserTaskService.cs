@@ -1,8 +1,8 @@
-﻿using Share.RabbitMessages;
+﻿using Share.RabbitMessages.ParserTaskAction;
 
 namespace Collector.ParserTasks;
 
 public interface IParserTaskService
 {
-    Task NewTaskCreatedHandler(NewParserTaskMessage newTask);
+	Task RunParserTaskHandler(ParserTask parserTaskInAction);
 }

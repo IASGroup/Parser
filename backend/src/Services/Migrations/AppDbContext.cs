@@ -8,33 +8,33 @@ namespace Migrations;
 
 public class AppDbContext : DbContext
 {
-    private readonly DbOptions _dbOptions;
+	private readonly DbOptions _dbOptions;
 
-    public AppDbContext(DbOptions dbOptions)
-    {
-        _dbOptions = dbOptions;
-    }
+	public AppDbContext(DbOptions dbOptions)
+	{
+		_dbOptions = dbOptions;
+	}
 
-    public DbSet<ParserTask> ParserTasks { get; set; }
-    public DbSet<ParserTaskType> ParserTaskTypes { get; set; }
-    public DbSet<ParserTaskPartialResult> ParserTaskPartialResults { get; set; }
-    public DbSet<ParserTaskStatuses> ParserTaskStatuses { get; set; }
-    public DbSet<ParserTaskPartialResultStatus> ParserTaskPartialResultStatuses { get; set; }
+	public DbSet<ParserTask> ParserTasks { get; set; }
+	public DbSet<ParserTaskType> ParserTaskTypes { get; set; }
+	public DbSet<ParserTaskPartialResult> ParserTaskPartialResults { get; set; }
+	public DbSet<ParserTaskStatuses> ParserTaskStatuses { get; set; }
+	public DbSet<ParserTaskPartialResultStatus> ParserTaskPartialResultStatuses { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-    }
+	protected override void OnModelCreating(ModelBuilder modelBuilder)
+	{
+		base.OnModelCreating(modelBuilder);
+		modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+	}
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        base.OnConfiguring(optionsBuilder);
-        var connectionString = $"Server={_dbOptions.Host};" +
-                               $"Port={_dbOptions.Port};" +
-                               $"Database={_dbOptions.DbName};" +
-                               $"User Id={_dbOptions.UserName};" +
-                               $"Password={_dbOptions.UserPassword};";
-        optionsBuilder.UseNpgsql(connectionString);
-    }
+	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+	{
+		base.OnConfiguring(optionsBuilder);
+		var connectionString = $"Server={_dbOptions.Host};" +
+							   $"Port={_dbOptions.Port};" +
+							   $"Database={_dbOptions.DbName};" +
+							   $"User Id={_dbOptions.UserName};" +
+							   $"Password={_dbOptions.UserPassword};";
+		optionsBuilder.UseNpgsql(connectionString);
+	}
 }
