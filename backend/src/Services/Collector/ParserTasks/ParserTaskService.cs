@@ -1,13 +1,5 @@
-﻿using System.Text.Json;
-using Collector.Contexts;
-using Collector.Contracts;
-using Collector.ParserTasks.Handlers.Api;
-using Collector.RabbitMq;
-using Microsoft.EntityFrameworkCore;
-using Share.Contracts;
-using Share.Tables;
+﻿using Collector.ParserTasks.Handlers.Api;
 using ParserTask = Share.RabbitMessages.ParserTaskAction.ParserTask;
-using ParserTaskStatuses = Share.Contracts.ParserTaskStatuses;
 
 namespace Collector.ParserTasks;
 

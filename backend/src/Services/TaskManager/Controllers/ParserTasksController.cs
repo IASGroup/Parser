@@ -1,7 +1,5 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Share.Tables;
-using TaskManager.ParserTasks.Commands.CreateParserTask;
 using TaskManager.ParserTasks.Commands.CreateParserTask.Request;
 using TaskManager.ParserTasks.Commands.CreateParserTask.Response;
 using TaskManager.ParserTasks.Commands.RunParserTask.Request;

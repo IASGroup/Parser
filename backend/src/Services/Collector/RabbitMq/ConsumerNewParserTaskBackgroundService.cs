@@ -4,7 +4,6 @@ using Collector.Options;
 using Collector.ParserTasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Share.RabbitMessages;
 using Share.RabbitMessages.ParserTaskAction;
 
 namespace Collector.RabbitMq;

@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Request = TaskManager.ParserTasks.Commands.CreateParserTask.Request;
 
 namespace TaskManager.ParserTasks.Commands.CreateParserTask.Mappers;
 
