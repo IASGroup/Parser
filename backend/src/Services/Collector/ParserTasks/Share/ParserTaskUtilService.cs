@@ -16,7 +16,7 @@ public class ParserTaskUtilService : IParserTaskUtilService
 		public string Value { get; set; } = null!;
 		public UrlPartTypes PartType { get; set; }
 	}
-	
+
 	public IEnumerable<string> GetParserTaskUrls(ParserTask parserTaskInAction)
 	{
 		var paths = parserTaskInAction.ParserTaskUrlOptions!.Paths!.Select(x =>

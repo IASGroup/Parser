@@ -30,13 +30,13 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 		_httpClient = httpClientFactory.CreateClient(HttpClientNames.Collector);
 		_parserTaskUtilService = parserTaskUtilService;
 	}
-	
+
 	public async Task Handle(ParserTask parserTaskInAction)
 	{
 		using var taskScope = _serviceProvider.CreateScope();
 		var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
 		var rabbitMqService = taskScope.ServiceProvider.GetService<IRabbitMqService>();
-		
+
 		if (dbContext is null || rabbitMqService is null)
 		{
 			_logger.LogError(
@@ -45,8 +45,9 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 			);
 			return;
 		}
-		
-		try {
+
+		try
+		{
 			_logger.LogInformation($"Начало задачи парсинга: {parserTaskInAction.Id}");
 
 			await dbContext.ParserTasks
@@ -54,7 +55,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 				.ExecuteUpdateAsync(x => x.SetProperty(
 					y => y.StatusId, (int) ParserTaskStatuses.InProgress)
 				);
-			
+
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
@@ -125,13 +126,13 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 		catch (Exception e)
 		{
 			var errorMessage = $"Ошибка при выполнении задачи парсинга: {parserTaskInAction.Name}";
-			
+
 			await dbContext.ParserTasks
 				.Where(x => x.Id == parserTaskInAction.Id)
 				.ExecuteUpdateAsync(x => x.SetProperty(
 					y => y.StatusId, (int) ParserTaskStatuses.Error)
 				);
-			
+
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
