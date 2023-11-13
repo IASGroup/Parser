@@ -48,9 +48,9 @@ public class ConsumerNewParserTaskBackgroundService : BackgroundService
 				var parserTask = JsonSerializer.Deserialize<ParserTaskActionMessage>(message);
 				_ = parserTask switch
 				{
-					{ ParserTaskAction: ParserTaskActions.Run } 
+					{ ParserTaskAction: ParserTaskActions.Run }
 						=> _parserTaskService.HandleRunParserTaskMessageAsync(parserTask.ParserTask),
-					{ ParserTaskAction: ParserTaskActions.Pause } 
+					{ ParserTaskAction: ParserTaskActions.Pause }
 						=> _parserTaskService.HandleStopParserTaskMessageAsync(parserTask.ParserTask),
 					_ => Task.CompletedTask
 				};

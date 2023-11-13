@@ -1,5 +1,4 @@
 ﻿using Collector.ParserTasks.Handlers.Api;
-using Microsoft.Extensions.Caching.Memory;
 using ParserTask = Share.RabbitMessages.ParserTaskAction.ParserTask;
 
 namespace Collector.ParserTasks;

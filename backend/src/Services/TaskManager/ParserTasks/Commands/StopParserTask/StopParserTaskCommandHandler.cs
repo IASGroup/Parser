@@ -27,7 +27,7 @@ public class StopParserTaskCommandHandler : IRequestHandler<StopParserTaskComman
 		_mapper = mapper;
 		_rabbitMqService = rabbitMqService;
 	}
-	
+
 	public async Task<Result<StopParserTaskResponseDto>> Handle(StopParserTaskCommand request, CancellationToken cancellationToken)
 	{
 		var taskModel = await _context.ParserTasks
@@ -52,13 +52,13 @@ public class StopParserTaskCommandHandler : IRequestHandler<StopParserTaskComman
 			const string errorMessage = "Задача не нейдена";
 			return Result<StopParserTaskResponseDto>.Failure(errorMessage);
 		}
-		
+
 		if (taskModel.StatusId is not (int) ParserTaskStatuses.InProgress)
 		{
 			const string errorMessage = "Задача не запущена";
 			return Result<StopParserTaskResponseDto>.Failure(errorMessage);
 		}
-		
+
 		var parserTaskInMessage = _mapper.Map<Action.ParserTask>(taskModel);
 		_rabbitMqService.SendTaskActionMessage(new Action.ParserTaskActionMessage()
 		{
