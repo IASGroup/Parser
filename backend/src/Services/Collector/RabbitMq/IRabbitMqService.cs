@@ -4,5 +4,5 @@ namespace Collector.RabbitMq;
 
 public interface IRabbitMqService
 {
-    void SendParserTaskCollectMessage(ParserTaskCollectMessage parserTaskCollectMessage);
+	void SendParserTaskCollectMessage(ParserTaskCollectMessage parserTaskCollectMessage);
 }

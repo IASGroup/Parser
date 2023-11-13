@@ -21,14 +21,15 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5053/api/parser-tasks",
+					"raw": "http://localhost:5140/api/manage/parser-tasks",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "5053",
+					"port": "5140",
 					"path": [
 						"api",
+						"manage",
 						"parser-tasks"
 					]
 				}
@@ -59,6 +60,29 @@
 					"path": [
 						"api",
 						"parser-tasks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "RunTask",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5140/api/manage/parser-tasks/e521a3d4-463b-438c-95a4-57693c368e87/run",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"manage",
+						"parser-tasks",
+						"e521a3d4-463b-438c-95a4-57693c368e87",
+						"run"
 					]
 				}
 			},

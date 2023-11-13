@@ -4,5 +4,5 @@ namespace Hubs.Hubs;
 
 public interface IParserTaskCollectMessagesHandler
 {
-    Task SendParserTaskCollectMessageAsync(ParserTaskCollectMessage collectMessage);
+	Task SendParserTaskCollectMessageAsync(ParserTaskCollectMessage collectMessage);
 }
