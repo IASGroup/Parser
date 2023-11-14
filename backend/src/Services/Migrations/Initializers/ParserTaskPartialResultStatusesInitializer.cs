@@ -1,6 +1,4 @@
-﻿using Share.Tables;
-
-namespace Migrations.Initializers;
+﻿namespace Migrations.Initializers;
 
 public class ParserTaskPartialResultStatusesInitializer : IDbInitializer
 {

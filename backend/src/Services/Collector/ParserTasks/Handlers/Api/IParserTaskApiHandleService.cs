@@ -4,5 +4,5 @@ namespace Collector.ParserTasks.Handlers.Api;
 
 public interface IParserTaskApiHandleService
 {
-	Task Handle(ParserTask parserTaskInAction);
+	Task Handle(ParserTask parserTaskInAction, CancellationToken cancellationToken);
 }

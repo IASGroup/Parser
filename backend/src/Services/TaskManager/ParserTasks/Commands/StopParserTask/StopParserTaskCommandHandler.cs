@@ -2,22 +2,22 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Share.Contracts;
-using Action = Share.RabbitMessages.ParserTaskAction;
 using TaskManager.Contexts;
-using TaskManager.ParserTasks.Commands.RunParserTask.Request;
-using TaskManager.ParserTasks.Commands.RunParserTask.Response;
+using TaskManager.ParserTasks.Commands.StopParserTask.Request;
+using TaskManager.ParserTasks.Commands.StopParserTask.Response;
 using TaskManager.ParserTasks.Contracts;
 using TaskManager.RabbitMq;
+using Action = Share.RabbitMessages.ParserTaskAction;
 
-namespace TaskManager.ParserTasks.Commands.RunParserTask;
+namespace TaskManager.ParserTasks.Commands.StopParserTask;
 
-public class RunParserTaskCommandHandler : IRequestHandler<RunParserTaskCommand, Result<RunParserTaskResponseDto>>
+public class StopParserTaskCommandHandler : IRequestHandler<StopParserTaskCommand, Result<StopParserTaskResponseDto>>
 {
 	private readonly AppDbContext _context;
 	private readonly IMapper _mapper;
 	private readonly IRabbitMqService _rabbitMqService;
 
-	public RunParserTaskCommandHandler(
+	public StopParserTaskCommandHandler(
 		AppDbContext context,
 		IMapper mapper,
 		IRabbitMqService rabbitMqService
@@ -28,10 +28,7 @@ public class RunParserTaskCommandHandler : IRequestHandler<RunParserTaskCommand,
 		_rabbitMqService = rabbitMqService;
 	}
 
-	public async Task<Result<RunParserTaskResponseDto>> Handle(
-		RunParserTaskCommand request,
-		CancellationToken cancellationToken
-	)
+	public async Task<Result<StopParserTaskResponseDto>> Handle(StopParserTaskCommand request, CancellationToken cancellationToken)
 	{
 		var taskModel = await _context.ParserTasks
 			.Include(x => x.ParserTaskUrlOptions!.PostMethodOptions)
@@ -45,7 +42,7 @@ public class RunParserTaskCommandHandler : IRequestHandler<RunParserTaskCommand,
 			.ThenInclude(x => x.ValueOptions!.Range)
 			.Include(x => x.ParserTaskUrlOptions!.Headers)
 			.Include(x => x.ParserTaskWebsiteTagsOptions!.ParserTaskWebsiteTags)!
-				.ThenInclude(x => x.FindOptions!.Attributes)
+			.ThenInclude(x => x.FindOptions!.Attributes)
 			.FirstOrDefaultAsync(
 				predicate: x => x.Id == request.TaskId,
 				cancellationToken: cancellationToken
@@ -53,22 +50,22 @@ public class RunParserTaskCommandHandler : IRequestHandler<RunParserTaskCommand,
 		if (taskModel is null)
 		{
 			const string errorMessage = "Задача не нейдена";
-			return Result<RunParserTaskResponseDto>.Failure(errorMessage);
+			return Result<StopParserTaskResponseDto>.Failure(errorMessage);
 		}
 
-		if (taskModel.StatusId is (int) ParserTaskStatuses.InProgress or (int) ParserTaskStatuses.Finished)
+		if (taskModel.StatusId is not (int) ParserTaskStatuses.InProgress)
 		{
-			const string errorMessage = "Задача уже запущена или завершена";
-			return Result<RunParserTaskResponseDto>.Failure(errorMessage);
+			const string errorMessage = "Задача не запущена";
+			return Result<StopParserTaskResponseDto>.Failure(errorMessage);
 		}
 
 		var parserTaskInMessage = _mapper.Map<Action.ParserTask>(taskModel);
 		_rabbitMqService.SendTaskActionMessage(new Action.ParserTaskActionMessage()
 		{
 			ParserTask = parserTaskInMessage,
-			ParserTaskAction = Action.ParserTaskActions.Run
+			ParserTaskAction = Action.ParserTaskActions.Pause
 		});
-		return Result<RunParserTaskResponseDto>.Success(new RunParserTaskResponseDto()
+		return Result<StopParserTaskResponseDto>.Success(new StopParserTaskResponseDto
 		{
 			ParserTaskId = taskModel.Id
 		});

@@ -4,5 +4,7 @@ namespace Collector.ParserTasks;
 
 public interface IParserTaskService
 {
-	Task RunParserTaskHandler(ParserTask parserTaskInAction);
+	Task HandleRunParserTaskMessageAsync(ParserTask parserTaskInAction);
+
+	Task HandleStopParserTaskMessageAsync(ParserTask parserTaskInAction);
 }

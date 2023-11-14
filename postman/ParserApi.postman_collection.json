@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"url\": \"https://jsonplaceholder.typicode.com/todos/{todo}\",\r\n  \"typeId\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить фейк апи\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\",\r\n    \"paths\": [\r\n        {\r\n            \"name\": \"todo\",\r\n            \"valueOptions\": {\r\n                \"range\": {\r\n                    \"start\": 1,\r\n                    \"end\": 20\r\n                }\r\n            }\r\n        }\r\n    ]\r\n  }\r\n}",
+					"raw": "{\r\n  \"url\": \"https://jsonplaceholder.typicode.com/todos/{todo}\",\r\n  \"typeId\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить фейк апи\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\",\r\n    \"paths\": [\r\n        {\r\n            \"name\": \"todo\",\r\n            \"valueOptions\": {\r\n                \"range\": {\r\n                    \"start\": 1,\r\n                    \"end\": 100\r\n                }\r\n            }\r\n        }\r\n    ]\r\n  }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -71,7 +71,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/manage/parser-tasks/e521a3d4-463b-438c-95a4-57693c368e87/run",
+					"raw": "http://localhost:5140/api/manage/parser-tasks/b6b5b2f1-6ef7-4687-baec-c1c3941597ff/run",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -81,8 +81,31 @@
 						"api",
 						"manage",
 						"parser-tasks",
-						"e521a3d4-463b-438c-95a4-57693c368e87",
+						"b6b5b2f1-6ef7-4687-baec-c1c3941597ff",
 						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "StopTask",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5140/api/manage/parser-tasks/b6b5b2f1-6ef7-4687-baec-c1c3941597ff/stop",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"manage",
+						"parser-tasks",
+						"b6b5b2f1-6ef7-4687-baec-c1c3941597ff",
+						"stop"
 					]
 				}
 			},

@@ -4,7 +4,6 @@ using Collector.Options;
 using Collector.ParserTasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Share.RabbitMessages;
 using Share.RabbitMessages.ParserTaskAction;
 
 namespace Collector.RabbitMq;
@@ -38,7 +37,7 @@ public class ConsumerNewParserTaskBackgroundService : BackgroundService
 		_channel.QueueDeclare(_rabbitMqOptions.ParserTaskActionsQueueName, exclusive: false, autoDelete: false);
 	}
 
-	protected override Task ExecuteAsync(CancellationToken stoppingToken)
+	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		var consumer = new AsyncEventingBasicConsumer(_channel);
 		consumer.Received += async (sender, args) =>
@@ -47,10 +46,14 @@ public class ConsumerNewParserTaskBackgroundService : BackgroundService
 			{
 				var message = Encoding.UTF8.GetString(args.Body.ToArray());
 				var parserTask = JsonSerializer.Deserialize<ParserTaskActionMessage>(message);
-				if (parserTask is { ParserTaskAction: ParserTaskActions.Run })
+				_ = parserTask switch
 				{
-					await _parserTaskService.RunParserTaskHandler(parserTask!.ParserTask);
-				}
+					{ ParserTaskAction: ParserTaskActions.Run }
+						=> _parserTaskService.HandleRunParserTaskMessageAsync(parserTask.ParserTask),
+					{ ParserTaskAction: ParserTaskActions.Pause }
+						=> _parserTaskService.HandleStopParserTaskMessageAsync(parserTask.ParserTask),
+					_ => Task.CompletedTask
+				};
 				_channel.BasicAck(args.DeliveryTag, false);
 				await Task.Yield();
 			}
@@ -65,7 +68,7 @@ public class ConsumerNewParserTaskBackgroundService : BackgroundService
 			}
 		};
 		_channel.BasicConsume(_rabbitMqOptions.ParserTaskActionsQueueName, false, consumer);
-		return Task.CompletedTask;
+		await Task.Delay(2000, stoppingToken);
 	}
 
 	public override void Dispose()
