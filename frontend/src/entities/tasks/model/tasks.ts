@@ -1,26 +1,17 @@
-import { defineStore } from "pinia";
-import { ref, reactive } from "vue";
-import { Task } from "./models";
+import {defineStore} from "pinia";
+import {ref} from "vue";
+import {TaskListModel, TaskStatuses, TaskTypes} from "./models";
 
 export const useTaskStore = defineStore("tasks", () => {
-  const tasks = ref<Array<Task>>([]);
+  const tasks = ref<Array<TaskListModel>>([]);
 
   tasks.value.push({
-    id: "id",
-    name: "first task",
-    status: {
-      id: 1,
-      description: "descript",
-      key: "key",
-    },
-    statusId: 1,
-    url: "url",
-    type: {
-      id: 1,
-      description: "descript",
-      name: "name",
-    },
-  });
+    id: "26f2942d-6806-44e6-b40f-adae8da5f858",
+    name: "Спарсить фейк апи",
+    url: "https://jsonplaceholder.typicode.com/todos/{todo}",
+    typeId: TaskTypes.Api,
+    statusId: TaskStatuses.Created
+  })
 
   return {
     tasks,
