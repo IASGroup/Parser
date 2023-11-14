@@ -1,6 +1,8 @@
-﻿namespace TaskManager.RabbitMq;
+﻿using Share.RabbitMessages.ParserTaskAction;
+
+namespace TaskManager.RabbitMq;
 
 public interface IRabbitMqService
 {
-    void SendMessage<T>(T message);
+	void SendTaskActionMessage(ParserTaskActionMessage actionMessage);
 }

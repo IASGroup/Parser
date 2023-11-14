@@ -1,51 +1,55 @@
-﻿using Collector.Contexts;
-using Core.Entities;
+﻿using Collector.ParserTasks.Handlers.Api;
+using ParserTask = Share.RabbitMessages.ParserTaskAction.ParserTask;
 
 namespace Collector.ParserTasks;
 
 public class ParserTaskService : IParserTaskService
 {
-    private readonly IServiceProvider _serviceProvider;
+	private readonly ILogger<ParserTaskService> _logger;
+	private readonly IParserTaskApiHandleService _parserTaskApiHandleService;
+	private readonly Dictionary<Guid, CancellationTokenSource> _cancellationTokenSources;
 
-    private readonly Dictionary<string, HttpMethod> _httpMethods = new()
-    {
-        {"GET", HttpMethod.Get},
-        {"POST", HttpMethod.Post},
-        {"PUT", HttpMethod.Put},
-        {"DELETE", HttpMethod.Delete},
-        {"PATCH", HttpMethod.Patch}
-    };
+	public ParserTaskService(
+		ILogger<ParserTaskService> logger,
+		IParserTaskApiHandleService parserTaskApiHandleService
+	)
+	{
+		_logger = logger;
+		_parserTaskApiHandleService = parserTaskApiHandleService;
+		_cancellationTokenSources = new Dictionary<Guid, CancellationTokenSource>();
+	}
 
-    public ParserTaskService(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
+	public async Task HandleRunParserTaskMessageAsync(ParserTask parserTaskInAction)
+	{
+		var tokenSource = new CancellationTokenSource();
+		_cancellationTokenSources.Add(parserTaskInAction.Id, tokenSource);
+		await (parserTaskInAction.TypeId switch
+		{
+			1 => _parserTaskApiHandleService.Handle(parserTaskInAction, tokenSource.Token),
+			_ => NotFoundTaskType(parserTaskInAction)
+		});
+		_cancellationTokenSources.Remove(parserTaskInAction.Id);
+	}
 
-    public async Task NewTaskCreatedHandler(ParserTask newTask)
-    {
-        using var taskScope = _serviceProvider.CreateScope();
-        using var httpClinet = new HttpClient();
-        var request = new HttpRequestMessage()
-        {
-            Method = _httpMethods[newTask.ParserTaskUrlOptions.RequestMethod],
-            RequestUri = new Uri(newTask.Url)
-        };
-        var response = await httpClinet.SendAsync(request);
+	public Task HandleStopParserTaskMessageAsync(ParserTask parserTaskInAction)
+	{
+		if (!_cancellationTokenSources.TryGetValue(parserTaskInAction.Id, out var tokenSource))
+		{
+			return Task.CompletedTask;
+		}
+		tokenSource!.Cancel();
+		_cancellationTokenSources.Remove(parserTaskInAction.Id);
+		_logger.LogInformation($"Задача остановлена: {parserTaskInAction.Id}");
+		return Task.CompletedTask;
+	}
 
-        if (!response.IsSuccessStatusCode)
-        {
-
-        }
-
-        var contentString = await response.Content.ReadAsStringAsync();
-        var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
-        var newResult = new ParserTaskResult()
-        {
-            ParserTaskId = newTask.Id,
-            Content = contentString
-        };
-        dbContext.ParserTaskResults.Add(newResult);
-        await dbContext.SaveChangesAsync();
-        // TODO: Отправить уведомление о завершении задачи парсинга
-    }
+	private Task NotFoundTaskType(ParserTask parserTaskInAction)
+	{
+		const string errorMessage = "Тип задачи парсинга не найден";
+		_logger.LogError(
+			message: errorMessage,
+			args: new { parserTaskInAction }
+		);
+		return Task.CompletedTask;
+	}
 }

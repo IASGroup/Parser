@@ -1,0 +1,64 @@
+﻿{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5053
+        }
+      ],
+      "UpstreamPathTemplate": "/api/manage/{everything}",
+      "UpstreamHttpMethod": [ "Get","Post" ],
+      "SwaggerKey": "manage"
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5205
+        }
+      ],
+      "UpstreamPathTemplate": "/api/reports/{everything}",
+      "UpstreamHttpMethod": [ "Get","Post" ],
+      "SwaggerKey": "reports"
+    },
+    {
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "UpstreamPathTemplate": "/{everything}",
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "ws",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5071 }
+      ]
+    }
+  ],
+  "SwaggerEndPoints": [
+    {
+      "Key": "manage",
+      "Config": [
+        {
+          "Name": "Task Management API",
+          "Version": "v1",
+          "Url": "http://localhost:5053/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "reports",
+      "Config": [
+        {
+          "Name": "Task Reporter API",
+          "Version": "v1",
+          "Url": "http://localhost:5205/swagger/v1/swagger.json"
+        }
+      ]
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "https://localhost:7201"
+  }
+}
