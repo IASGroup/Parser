@@ -17,8 +17,5 @@ export type TaskListModel = {
   url: string,
   name: string,
   typeId: TaskTypes,
-  statusId: TaskStatuses,
-  hasError: boolean,
-  completedPartsNumber: number,
-  allPartsNumber: number
+  statusId: TaskStatuses
 }

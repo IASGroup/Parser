@@ -1,6 +1,4 @@
 import TaskItem from './task-item';
-export { TaskItem };
 import TaskDetails from './task-details'
+export { TaskItem };
 export { TaskDetails }
-import CreateTaskDialog from "./create-task-dialog";
-export { CreateTaskDialog }

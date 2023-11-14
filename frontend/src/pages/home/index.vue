@@ -1,45 +1,23 @@
 <script setup lang="ts">
-import {storeToRefs} from "pinia";
-import {CreateTaskDialog, TaskItem, TaskListModel, taskStore} from "@/entities/tasks";
-import {onMounted, ref} from "vue";
-import {
-  GetTasksAsync,
-  ParserTaskCollectMessage,
-  ParserTaskCollectMessageTypes,
-  parserTasksHubMessages,
-  parserTasksHubUrl
-} from "@/shared/api";
-import {HubConnectionBuilder} from "@microsoft/signalr"
+import { storeToRefs } from "pinia";
+import { taskStore, TaskItem } from "@/entities/tasks";
+import { ref } from "vue";
 
-const {tasks} = storeToRefs(taskStore());
+const { tasks } = storeToRefs(taskStore());
 
 const showCreateTaskDialog = ref<boolean>(false);
-
-onMounted(async () => {
-  const getTasksResponse = await GetTasksAsync();
-  if (getTasksResponse.isSuccess) tasks.value = getTasksResponse.result as Array<TaskListModel>;
-  else console.log(getTasksResponse)
-
-  const hub = new HubConnectionBuilder()
-    .withUrl(parserTasksHubUrl)
-    .build();
-  hub.on(parserTasksHubMessages.NewParserTaskCollectMessage, data => {
-    const message = data as ParserTaskCollectMessage;
-    const task = tasks.value.find(x => x.id === message.parserTaskId);
-    if (!task) return;
-    if (message.type === ParserTaskCollectMessageTypes.StatusChanged) {
-      task.statusId = message.parserTaskStatusChangedMessage?.newTaskStatus;
-    } else if (message.type === ParserTaskCollectMessageTypes.Progress) {
-      task.completedPartsNumber = message.parserTaskProgressMessage.completedPartsNumber;
-    }
-  })
-  await hub.start();
-});
 </script>
 
 <template>
   <v-dialog width="70%" v-model="showCreateTaskDialog">
-    <create-task-dialog @parser-task-created="showCreateTaskDialog = false"/>
+    <v-container>
+      <v-card>
+        <v-card-title class="text-primary">Создание задачи парсинга</v-card-title>
+        <v-card-actions>
+          <v-btn block="true" color="primary" variant="flat">Создать</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-container>
   </v-dialog>
   <v-container>
     <v-layout class="d-flex justify-center">
@@ -54,7 +32,7 @@ onMounted(async () => {
         <div class="d-flex justify-center mb-5">
           <v-list v-if="tasks.length !== 0" width="100%">
             <v-list-item v-for="task in tasks" :key="task.id">
-              <task-item :task="task"/>
+              <TaskItem :task="task"/>
             </v-list-item>
           </v-list>
           <div v-else>
