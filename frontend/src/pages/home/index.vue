@@ -1,23 +1,16 @@
 <script setup lang="ts">
-import { storeToRefs } from "pinia";
-import { taskStore, TaskItem } from "@/entities/tasks";
-import { ref } from "vue";
+import {storeToRefs} from "pinia";
+import {taskStore, TaskItem, CreateTaskDialog} from "@/entities/tasks";
+import {ref} from "vue";
 
-const { tasks } = storeToRefs(taskStore());
+const {tasks} = storeToRefs(taskStore());
 
 const showCreateTaskDialog = ref<boolean>(false);
 </script>
 
 <template>
   <v-dialog width="70%" v-model="showCreateTaskDialog">
-    <v-container>
-      <v-card>
-        <v-card-title class="text-primary">Создание задачи парсинга</v-card-title>
-        <v-card-actions>
-          <v-btn block="true" color="primary" variant="flat">Создать</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-container>
+    <create-task-dialog/>
   </v-dialog>
   <v-container>
     <v-layout class="d-flex justify-center">
@@ -32,7 +25,7 @@ const showCreateTaskDialog = ref<boolean>(false);
         <div class="d-flex justify-center mb-5">
           <v-list v-if="tasks.length !== 0" width="100%">
             <v-list-item v-for="task in tasks" :key="task.id">
-              <TaskItem :task="task"/>
+              <task-item :task="task"/>
             </v-list-item>
           </v-list>
           <div v-else>
