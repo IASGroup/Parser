@@ -345,6 +345,68 @@ async function createParserTask() : Promise<void> {
   });
   emit('parserTaskCreated');
 }
+
+const valueOptionsInputHandler = _.debounce((event, urlPartName: string) => valueOptionsInputValueChangedHandler(event.target.value, urlPartName), 300);
+function valueOptionsInputValueChangedHandler(newInputValue: string, urlPartName: string) {
+  const urlPart = urlParts.value.filter(x => x.name === urlPartName)[0];
+  urlPart.valueOptionInputSuccess = false;
+  urlPart.valueOptions.value = null;
+  urlPart.valueOptions.values = null;
+  urlPart.valueOptions.range = null;
+  const firstKeyWordMatch = newInputValue.match(new RegExp("(range|values|value)"));
+  const firstKeyWord = firstKeyWordMatch ? firstKeyWordMatch[0].replaceAll(' ', '') : null;
+  const firstKeyWordCorrect = firstKeyWord && (firstKeyWord === "range" || firstKeyWord === "values" || firstKeyWord === "value")
+  if (!firstKeyWordCorrect) {
+    urlPart.valueOptionInputError = "Значение должно начинаться с range или values или value"
+    return;
+  }
+  const inputWithoutFirstKeyWord = newInputValue.replace(firstKeyWord!, '').trim();
+  const valuesSplit = inputWithoutFirstKeyWord.split(',');
+  if (firstKeyWord === "range" || firstKeyWord === "values") {
+    if (valuesSplit[0][0] !== '[' || valuesSplit[valuesSplit.length - 1].slice(-1) !== ']') {
+      urlPart.valueOptionInputError = "Значения должны быть заключены в скобки: [1,2,3]"
+      return;
+    }
+    if (valuesSplit.length < 2) {
+      urlPart.valueOptionInputError = "Необходимо ввести как минимум два значения: [1, 2]"
+      return;
+    }
+
+    if (valuesSplit[0].trim().length < 2 || valuesSplit[valuesSplit.length - 1].trim().length < 2){
+      urlPart.valueOptionInputError = "Необходимо корректно ввести первое и последнее значение: [1,2]"
+      return;
+    }
+
+    if (firstKeyWord === "range") {
+      if (valuesSplit.length !== 2) {
+        urlPart.valueOptionInputError = "Для range допустимо ввести только 2 значения"
+        return;
+      }
+      const firstValue = parseInt(valuesSplit[0].trim().slice(1));
+      const secondValue = parseInt(valuesSplit[1].trim().slice(0,-1));
+      if (isNaN(firstValue) || isNaN(secondValue)) {
+        urlPart.valueOptionInputError = "Для range допустимы только целочисленные значения"
+        return;
+      }
+      urlPart.valueOptions.range = { start: firstValue, end: secondValue };
+    }
+    if (firstKeyWord == "values") {
+      const firstValue = valuesSplit[0].trim().slice(1);
+      const lastValue = valuesSplit.slice(-1)[0].trim().slice(0,-1);
+      const values = [firstValue].concat(valuesSplit.slice(1, -1).map(x => x.trim())).concat([lastValue]);
+      urlPart.valueOptions.values = values.map(x => { return { value: x }});
+    }
+  }
+  if (firstKeyWord == "value") {
+    if (inputWithoutFirstKeyWord.trim().length === 0) {
+      urlPart.valueOptionInputError = "Необходимо ввести значение"
+      return;
+    }
+    urlPart.valueOptions.value = inputWithoutFirstKeyWord.trim();
+  }
+  urlPart.valueOptionInputError = null;
+  urlPart.valueOptionInputSuccess = true;
+}
 </script>
 
 <template>
