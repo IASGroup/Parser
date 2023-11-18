@@ -11,8 +11,8 @@ const menuTaskTypes = [
 const selectedMenuTaskType = ref<string>("Задача парсинга АПИ");
 
 enum PartTypes {
-  Path = 0,
-  Query = 1
+  Path = "path",
+  Query = "query"
 }
 
 type UrlPart = {
@@ -27,7 +27,10 @@ type UrlPart = {
     }> | null,
     value: string | null
   },
-  partType: PartTypes
+  partType: PartTypes,
+  selectedValueOption: string,
+  valueOptionInputError: string | null,
+  valueOptionInputSuccess: boolean
 }
 const urlParts = ref<Array<UrlPart>>([])
 
@@ -46,10 +49,75 @@ function urlInputValueChangedHandler(newUrlInputValue: string): void {
     const match = x[0];
     return {
       name: match.slice(1).slice(0, -1),
-      valueOptions: {range: null, values: null, value: match},
-      partType: PartTypes.Path
+      valueOptions: {range: null, values: null, value: null},
+      partType: PartTypes.Path,
+      selectedValueOption: valueOptionsMenu[2],
+      valueOptionInputError: null,
+      valueOptionInputSuccess: false
     }
   });
+}
+
+const valueOptionsInputHandler = _.debounce((event, urlPartName: string) => valueOptionsInputValueChangedHandler(event.target.value, urlPartName), 300);
+function valueOptionsInputValueChangedHandler(newInputValue: string, urlPartName: string) {
+  const urlPart = urlParts.value.filter(x => x.name === urlPartName)[0];
+  urlPart.valueOptionInputSuccess = false;
+  urlPart.valueOptions.value = null;
+  urlPart.valueOptions.values = null;
+  urlPart.valueOptions.range = null;
+  const firstKeyWordMatch = newInputValue.match(new RegExp("(range|values|value)"));
+  const firstKeyWord = firstKeyWordMatch ? firstKeyWordMatch[0].replaceAll(' ', '') : null;
+  const firstKeyWordCorrect = firstKeyWord && (firstKeyWord === "range" || firstKeyWord === "values" || firstKeyWord === "value")
+  if (!firstKeyWordCorrect) {
+    urlPart.valueOptionInputError = "Значение должно начинаться с range или values или value"
+    return;
+  }
+  const inputWithoutFirstKeyWord = newInputValue.replace(firstKeyWord!, '').trim();
+  const valuesSplit = inputWithoutFirstKeyWord.split(',');
+  if (firstKeyWord === "range" || firstKeyWord === "values") {
+    if (valuesSplit[0][0] !== '[' || valuesSplit[valuesSplit.length - 1].slice(-1) !== ']') {
+      urlPart.valueOptionInputError = "Значения должны быть заключены в скобки: [1,2,3]"
+      return;
+    }
+    if (valuesSplit.length < 2) {
+      urlPart.valueOptionInputError = "Необходимо ввести как минимум два значения: [1, 2]"
+      return;
+    }
+
+    if (valuesSplit[0].trim().length < 2 || valuesSplit[valuesSplit.length - 1].trim().length < 2){
+      urlPart.valueOptionInputError = "Необходимо корректно ввести первое и последнее значение: [1,2]"
+      return;
+    }
+
+    if (firstKeyWord === "range") {
+      if (valuesSplit.length !== 2) {
+        urlPart.valueOptionInputError = "Для range допустимо ввести только 2 значения"
+        return;
+      }
+      const firstValue = parseInt(valuesSplit[0].trim().slice(1));
+      const secondValue = parseInt(valuesSplit[1].trim().slice(0,-1));
+      if (isNaN(firstValue) || isNaN(secondValue)) {
+        urlPart.valueOptionInputError = "Для range допустимы только целочисленные значения"
+        return;
+      }
+      urlPart.valueOptions.range = { start: firstValue, end: secondValue };
+    }
+    if (firstKeyWord == "values") {
+      const firstValue = valuesSplit[0].trim().slice(1);
+      const lastValue = valuesSplit.slice(-1)[0].trim().slice(0,-1);
+      const values = [firstValue].concat(valuesSplit.slice(1, -1).map(x => x.trim())).concat([lastValue]);
+      urlPart.valueOptions.values = values.map(x => { return { value: x }});
+    }
+  }
+  if (firstKeyWord == "value") {
+    if (inputWithoutFirstKeyWord.trim().length === 0) {
+      urlPart.valueOptionInputError = "Необходимо ввести значение"
+      return;
+    }
+    urlPart.valueOptions.value = inputWithoutFirstKeyWord.trim();
+  }
+  urlPart.valueOptionInputError = null;
+  urlPart.valueOptionInputSuccess = true;
 }
 </script>
 
@@ -63,22 +131,39 @@ function urlInputValueChangedHandler(newUrlInputValue: string): void {
         </div>
       </div>
       <v-container v-if="selectedMenuTaskType === menuTaskTypes[0]">
-        <v-text-field label="Url" variant="solo" v-on:keyup="e => urlInputEventHandler(e)"/>
-        <v-card>
-          <v-card-title class="text-subtitle-1">Path params</v-card-title>
+        <v-text-field
+          variant="solo" v-on:keyup="e => urlInputEventHandler(e)"
+          placeholder="https://localhost:3000/users/{user}?todo=1"
+          hint="Используйте {param} для установки параметров в пути url"
+          class="mb-3"
+        />
+        <v-card v-if="urlParts.length !== 0">
+          <v-card-title class="text-subtitle-1">Url params</v-card-title>
           <v-list>
             <v-list-item v-for="urlPart in urlParts" :key="urlPart.name">
-              <v-row>
-                <v-col>
-                  {{ urlPart.name }}
-                </v-col>
-                <v-col>
-                  <v-select variant="solo" :items="valueOptionsMenu"></v-select>
-                </v-col>
-              </v-row>
-              <v-row>
-
-              </v-row>
+             <v-card>
+               <v-row class="ma-0 pa-1 d-flex align-center">
+                 <v-col cols="2" class="d-flex justify-center pa-0">
+                   <v-badge
+                     offset-y="-15" location="left top" :content="urlPart.partType"
+                     :color="urlPart.partType === PartTypes.Path ? 'blue-darken-2' : 'orange-darken-2'"
+                   >
+                     <span class="text-wrap">{{urlPart.name}}</span>
+                   </v-badge>
+                 </v-col>
+                 <v-col class="d-flex justify-center align-center pa-0">
+                   <v-text-field
+                     :error="!!urlPart.valueOptionInputError"
+                     :error-messages="urlPart.valueOptionInputError"
+                     variant="solo"
+                     placeholder="type range [start, end] or values [one, two ..] or value 2"
+                     v-on:keyup="e => valueOptionsInputHandler(e, urlPart.name)"
+                     style="margin-top: 22px"
+                   />
+                   <v-icon v-if="urlPart.valueOptionInputSuccess" icon="mdi-check-bold" class="ml-4" color="green"/>
+                 </v-col>
+               </v-row>
+             </v-card>
             </v-list-item>
           </v-list>
         </v-card>
@@ -91,7 +176,7 @@ function urlInputValueChangedHandler(newUrlInputValue: string): void {
       </v-container>
       <v-spacer/>
       <v-card-actions class="pa-0 ma-0">
-        <v-btn block="true" color="primary" variant="flat">Создать</v-btn>
+        <v-btn :block="true" color="primary" variant="flat">Создать</v-btn>
       </v-card-actions>
     </v-card>
   </v-container>
