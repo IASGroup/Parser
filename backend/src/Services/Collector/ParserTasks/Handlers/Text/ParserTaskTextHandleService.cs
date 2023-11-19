@@ -9,6 +9,7 @@ using Share.Tables;
 using System.Text.RegularExpressions;
 using ParserTask = Share.RabbitMessages.ParserTaskAction.ParserTask;
 using ParserTaskStatuses = Share.Contracts.ParserTaskStatuses;
+using HtmlAgilityPack;
 
 namespace Collector.ParserTasks.Handlers.Text;
 
@@ -102,10 +103,28 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
                 var response = await _httpClient.SendAsync(request, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-				string pattern = @"<.*?>|(s)?://\S+|<img.*?>|\[table\].*?\[/table\]";
-
-				var clearString = Regex.Replace(responseContent, pattern, string.Empty);
-
+                string[] classesToRemove = { "ad", "advertisement", "promo" }; // Здесь список классов рекламы
+                string[] tagsToRemove = { "script", "iframe", "img", "head", "footer", "nav","a","table" }; //список тегов для удаления
+                HtmlDocument doc = new HtmlDocument();
+                doc.LoadHtml(responseContent);
+                //Полностью удаляем мусорные теги
+                foreach (var tag in tagsToRemove)
+                {
+                    HtmlNodeCollection nodesToRemove = doc.DocumentNode.SelectNodes($"//{tag}");
+                    if (nodesToRemove != null)
+                    {
+                        foreach (HtmlNode node in nodesToRemove)
+                        {
+                            node.Remove(); 
+                        }
+                    }
+                }
+                //Удаляем теги по классам
+                RemoveElementsByClass(doc.DocumentNode, classesToRemove);
+                responseContent = doc.DocumentNode.OuterHtml;
+                string pattern = "<.*?>";
+                responseContent = Regex.Replace(responseContent, pattern, "");
+                
 				if (!response.IsSuccessStatusCode)
                 {
                     rabbitMqService.SendParserTaskCollectMessage(new()
@@ -116,7 +135,7 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
                             ErrorMessage = JsonSerializer.Serialize(new
                             {
                                 response.StatusCode,
-                                Content = clearString
+                                Content = responseContent
                             }),
                             Url = url
                         }
@@ -210,6 +229,27 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
             }
         });
     }
+    static void RemoveElementsByClass(HtmlNode node, string[] classesToRemove)
+        {
+            if (node.NodeType == HtmlNodeType.Element && node.HasAttributes && node.Attributes.Contains("class"))
+            {
+                var classAttributeValue = node.GetAttributeValue("class", "");
+                var nodeClasses = classAttributeValue.Split(' ');
+
+                if (nodeClasses.Any(c => classesToRemove.Contains(c)))
+                {
+                    node.Remove();
+                    return;
+                }
+            }
+
+            for (int i = node.ChildNodes.Count - 1; i >= 0; i--)
+            {
+                RemoveElementsByClass(node.ChildNodes[i], classesToRemove);
+            }
+        }
+
+
 }
 
 
