@@ -30,7 +30,7 @@ type UrlPart = {
   partType: PartTypes,
   selectedValueOption: string,
   valueOptionInputError: string | null,
-  valueOptionInputSuccess: boolean
+  valueOptionInputSuccess: boolean,
 }
 const urlParts = ref<Array<UrlPart>>([])
 
@@ -39,26 +39,61 @@ const valueOptionsMenu = [
   "Values",
   "Value"
 ];
-const urlInputEventHandler = _.debounce(e => urlInputValueChangedHandler(e.target.value), 300);
+const taskName = ref<string | null>(null);
 
+const taskNameKeyUpEventHandler = _.debounce((event) => taskNameInputValueChangedHandler(event.target.value), 300);
+function taskNameInputValueChangedHandler(newTaskName: string) {
+  taskName.value = newTaskName;
+}
+
+const urlKeyUpEventHandler = _.debounce(e => urlInputValueChangedHandler(e.target.value), 300);
 function urlInputValueChangedHandler(newUrlInputValue: string): void {
   const queryStartIndex = newUrlInputValue.indexOf("?");
   const urlWithoutQueries = queryStartIndex === -1 ? newUrlInputValue : newUrlInputValue.slice(0, queryStartIndex);
   const matches = [...urlWithoutQueries.matchAll(new RegExp("{\\w+}", "g"))];
-  urlParts.value = matches.map<UrlPart>(x => {
+  const paths = matches.map<UrlPart>(x => {
     const match = x[0];
+    const name = match.slice(1).slice(0, -1);
+    const previousUrlPart = urlParts.value.filter(x => x.name === name);
     return {
-      name: match.slice(1).slice(0, -1),
-      valueOptions: {range: null, values: null, value: null},
+      name: name,
+      valueOptions: {
+        range: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptions.range : null,
+        values: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptions.values : null,
+        value: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptions.value: null
+      },
       partType: PartTypes.Path,
       selectedValueOption: valueOptionsMenu[2],
-      valueOptionInputError: null,
-      valueOptionInputSuccess: false
+      valueOptionInputError: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptionInputError : null,
+      valueOptionInputSuccess: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptionInputSuccess : false,
     }
   });
+  const queries: Array<UrlPart> = [];
+  const queriesString = queryStartIndex === -1 || queryStartIndex === newUrlInputValue.length - 1 ? '' : newUrlInputValue.slice(queryStartIndex + 1);
+  if (queriesString.length != 0) {
+    const queriesSplit = queriesString.split('&').filter(x => x !== '');
+    const queriesFromSplit = queriesSplit.map<UrlPart>(x => {
+      const queryName = x.split('=')[0];
+      const previousUrlPart = urlParts.value.filter(x => x.name === queryName);
+      return {
+        name: queryName,
+        valueOptions: {
+          range: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptions.range : null,
+          values: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptions.values : null,
+          value: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptions.value: null
+        },
+        partType: PartTypes.Query,
+        selectedValueOption: valueOptionsMenu[2],
+        valueOptionInputError: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptionInputError : null,
+        valueOptionInputSuccess: previousUrlPart.length !== 0 ? previousUrlPart[0].valueOptionInputSuccess : false,
+      }
+    })
+    queries.push(...queriesFromSplit);
+  }
+  urlParts.value = paths.concat(queries);
 }
 
-const valueOptionsInputHandler = _.debounce((event, urlPartName: string) => valueOptionsInputValueChangedHandler(event.target.value, urlPartName), 300);
+const valueOptionsKeyUpEventHandler = _.debounce((event, urlPartName: string) => valueOptionsInputValueChangedHandler(event.target.value, urlPartName), 300);
 function valueOptionsInputValueChangedHandler(newInputValue: string, urlPartName: string) {
   const urlPart = urlParts.value.filter(x => x.name === urlPartName)[0];
   urlPart.valueOptionInputSuccess = false;
@@ -132,8 +167,13 @@ function valueOptionsInputValueChangedHandler(newInputValue: string, urlPartName
       </div>
       <v-container v-if="selectedMenuTaskType === menuTaskTypes[0]">
         <v-text-field
-          variant="solo" v-on:keyup="e => urlInputEventHandler(e)"
-          placeholder="https://localhost:3000/users/{user}?todo=1"
+          variant="solo"
+          label="Название задачи"
+          v-on:keyup="e => taskNameKeyUpEventHandler(e)"
+        />
+        <v-text-field
+          variant="solo" v-on:keyup="e => urlKeyUpEventHandler(e)"
+          placeholder="https://localhost:3000/users/{user}?todo&part"
           hint="Используйте {param} для установки параметров в пути url"
           class="mb-3"
         />
@@ -157,7 +197,7 @@ function valueOptionsInputValueChangedHandler(newInputValue: string, urlPartName
                      :error-messages="urlPart.valueOptionInputError"
                      variant="solo"
                      placeholder="type range [start, end] or values [one, two ..] or value 2"
-                     v-on:keyup="e => valueOptionsInputHandler(e, urlPart.name)"
+                     v-on:keyup="e => valueOptionsKeyUpEventHandler(e, urlPart.name)"
                      style="margin-top: 22px"
                    />
                    <v-icon v-if="urlPart.valueOptionInputSuccess" icon="mdi-check-bold" class="ml-4" color="green"/>
