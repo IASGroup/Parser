@@ -17,7 +17,7 @@ public class GetTaskResultsQueryHandler : IRequestHandler<GetTaskResultsQuery, R
 		_context = context;
 		_logger = logger;
 	}
-	
+
 	public async Task<Result<byte[]>> Handle(GetTaskResultsQuery request, CancellationToken cancellationToken)
 	{
 		try
@@ -31,9 +31,9 @@ public class GetTaskResultsQueryHandler : IRequestHandler<GetTaskResultsQuery, R
 				return Result<byte[]>.Failure("Задача парсинга не найдена");
 			}
 			var taskResults = await _context.ParserTaskPartialResults
-				.Where(x => 
-					x.ParserTaskId == request.TaskId 
-					&& x.StatusId == (int)ParserTaskPartialResultStatuses.Success
+				.Where(x =>
+					x.ParserTaskId == request.TaskId
+					&& x.StatusId == (int) ParserTaskPartialResultStatuses.Success
 				)
 				.Select(x => x.Content)
 				.ToListAsync(cancellationToken);
@@ -49,6 +49,6 @@ public class GetTaskResultsQueryHandler : IRequestHandler<GetTaskResultsQuery, R
 			);
 			return Result<byte[]>.Failure(errorMessage);
 		}
-		
+
 	}
 }
