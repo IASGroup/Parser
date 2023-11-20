@@ -346,7 +346,7 @@ async function createParserTask() : Promise<void> {
   emit('parserTaskCreated');
 }
 
-const valueOptionsInputHandler = _.debounce((event, urlPartName: string) => valueOptionsInputValueChangedHandler(event.target.value, urlPartName), 300);
+const valueOptionsKeyUpEventHandler = _.debounce((event, urlPartName: string) => valueOptionsInputValueChangedHandler(event.target.value, urlPartName), 300);
 function valueOptionsInputValueChangedHandler(newInputValue: string, urlPartName: string) {
   const urlPart = urlParts.value.filter(x => x.name === urlPartName)[0];
   urlPart.valueOptionInputSuccess = false;
