@@ -62,7 +62,7 @@ const chipModel = computed(() => {
       </v-col>
       <div class="d-flex justify-center">
         <v-col>
-          <v-btn icon>
+          <v-btn :disabled="task.statusId === TaskStatuses.Finished" icon>
             <v-icon v-if="!(task.statusId === TaskStatuses.InProgress)" size="30" color="green">mdi-play-circle-outline</v-icon>
             <v-progress-circular v-else color="red" width="2" indeterminate>
               <v-icon color="red">mdi-stop</v-icon>
