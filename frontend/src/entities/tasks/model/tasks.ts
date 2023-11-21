@@ -49,7 +49,7 @@ export const useTaskStore = defineStore("tasks", () => {
     statusId: TaskStatuses.Finished,
     hasError: false,
     allPartsNumber: 50,
-    competedPartsNumber: 40
+    competedPartsNumber: 50
   })
 
   return {
