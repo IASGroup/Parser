@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "3b95c142-43b9-4ed2-898b-8908b91c3ff3",
+		"_postman_id": "b599f950-61ec-41fc-aaf6-3b2fff42154b",
 		"name": "ParserApi",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "18129580"
+		"_exporter_id": "25338424"
 	},
 	"item": [
 		{
@@ -59,6 +59,36 @@
 					"port": "5053",
 					"path": [
 						"api",
+						"parser-tasks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CreateTaskTextParser",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"url\": \"https://wiki.lineageos.org/gapps\",\r\n  \"typeId\": 2, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить фейк апи\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\",\r\n    \"paths\": [\r\n        {\r\n            \"name\": \"todo\",\r\n            \"valueOptions\": {\r\n                \"range\": {\r\n                    \"start\": 1,\r\n                    \"end\": 100\r\n                }\r\n            }\r\n        }\r\n    ]\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5140/api/manage/parser-tasks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"manage",
 						"parser-tasks"
 					]
 				}
