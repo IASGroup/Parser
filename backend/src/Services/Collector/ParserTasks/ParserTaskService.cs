@@ -1,4 +1,5 @@
 ﻿using Collector.ParserTasks.Handlers.Api;
+using Collector.ParserTasks.Handlers.Text;
 using ParserTask = Share.RabbitMessages.ParserTaskAction.ParserTask;
 
 namespace Collector.ParserTasks;
@@ -7,15 +8,18 @@ public class ParserTaskService : IParserTaskService
 {
 	private readonly ILogger<ParserTaskService> _logger;
 	private readonly IParserTaskApiHandleService _parserTaskApiHandleService;
+	private readonly IParserTaskTextHandleService _parserTaskTextHandleService;
 	private readonly Dictionary<Guid, CancellationTokenSource> _cancellationTokenSources;
 
 	public ParserTaskService(
 		ILogger<ParserTaskService> logger,
-		IParserTaskApiHandleService parserTaskApiHandleService
+		IParserTaskApiHandleService parserTaskApiHandleService,
+		IParserTaskTextHandleService parserTaskTextHandleService
 	)
 	{
 		_logger = logger;
 		_parserTaskApiHandleService = parserTaskApiHandleService;
+		_parserTaskTextHandleService = parserTaskTextHandleService;
 		_cancellationTokenSources = new Dictionary<Guid, CancellationTokenSource>();
 	}
 
@@ -26,6 +30,7 @@ public class ParserTaskService : IParserTaskService
 		await (parserTaskInAction.TypeId switch
 		{
 			1 => _parserTaskApiHandleService.Handle(parserTaskInAction, tokenSource.Token),
+			2 => _parserTaskTextHandleService.Handle(parserTaskInAction, tokenSource.Token),
 			_ => NotFoundTaskType(parserTaskInAction)
 		});
 		_cancellationTokenSources.Remove(parserTaskInAction.Id);
