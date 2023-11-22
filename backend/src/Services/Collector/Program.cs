@@ -3,6 +3,7 @@ using Collector.Contracts;
 using Collector.Options;
 using Collector.ParserTasks;
 using Collector.ParserTasks.Handlers.Api;
+using Collector.ParserTasks.Handlers.Text;
 using Collector.ParserTasks.Share;
 using Collector.RabbitMq;
 
@@ -21,6 +22,7 @@ builder.Services.Configure<DbOptions>(builder.Configuration.GetSection(DbOptions
 builder.Services.AddHostedService<ConsumerNewParserTaskBackgroundService>();
 builder.Services.AddSingleton<IParserTaskService, ParserTaskService>();
 builder.Services.AddSingleton<IParserTaskApiHandleService, ParserTaskApiHandler>();
+builder.Services.AddSingleton<IParserTaskTextHandleService, ParserTaskTextHandler>();
 builder.Services.AddSingleton<IParserTaskUtilService, ParserTaskUtilService>();
 builder.Services.AddScoped<IRabbitMqService, RabbitMqService>();
 builder.Services.AddDbContext<AppDbContext>();
