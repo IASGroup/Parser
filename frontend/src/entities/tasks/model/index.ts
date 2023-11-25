@@ -1,3 +1,2 @@
-export { useTaskStore as taskModel } from "./tasks";
-export type {Task} from "./models"
-export type {Status} from "./models"
+export { useTaskStore as taskStore } from "./tasks";
+export * from "./models"
