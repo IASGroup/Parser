@@ -101,7 +101,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/manage/parser-tasks/a0ab803a-04e4-4c8d-98e4-a21745d178b8/run",
+					"raw": "http://localhost:5140/api/manage/parser-tasks/3d1a6e2f-2b33-4960-8b0a-d87eb1969e66/run",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -111,7 +111,7 @@
 						"api",
 						"manage",
 						"parser-tasks",
-						"a0ab803a-04e4-4c8d-98e4-a21745d178b8",
+						"3d1a6e2f-2b33-4960-8b0a-d87eb1969e66",
 						"run"
 					]
 				}
@@ -124,7 +124,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/manage/parser-tasks/a0ab803a-04e4-4c8d-98e4-a21745d178b8/stop",
+					"raw": "http://localhost:5140/api/manage/parser-tasks/3d1a6e2f-2b33-4960-8b0a-d87eb1969e66/stop",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -134,7 +134,7 @@
 						"api",
 						"manage",
 						"parser-tasks",
-						"a0ab803a-04e4-4c8d-98e4-a21745d178b8",
+						"3d1a6e2f-2b33-4960-8b0a-d87eb1969e66",
 						"stop"
 					]
 				}
@@ -168,7 +168,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/reports/parser-tasks/a0ab803a-04e4-4c8d-98e4-a21745d178b8/results",
+					"raw": "http://localhost:5140/api/reports/parser-tasks/3d1a6e2f-2b33-4960-8b0a-d87eb1969e66/results",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -178,7 +178,7 @@
 						"api",
 						"reports",
 						"parser-tasks",
-						"a0ab803a-04e4-4c8d-98e4-a21745d178b8",
+						"3d1a6e2f-2b33-4960-8b0a-d87eb1969e66",
 						"results"
 					]
 				}
@@ -204,6 +204,28 @@
 						"a0ab803a-04e4-4c8d-98e4-a21745d178b8",
 						"results",
 						"download"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetTask",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5140/api/reports/parser-tasks/3d1a6e2f-2b33-4960-8b0a-d87eb1969e66",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"reports",
+						"parser-tasks",
+						"3d1a6e2f-2b33-4960-8b0a-d87eb1969e66"
 					]
 				}
 			},
