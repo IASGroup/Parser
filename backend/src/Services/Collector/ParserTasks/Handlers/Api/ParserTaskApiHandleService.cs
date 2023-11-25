@@ -70,6 +70,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
+				Type = ParserTaskCollectMessageTypes.StatusChanged,
 				ParserTaskStatusChangedMessage = new()
 				{
 					NewTaskStatus = (int) ParserTaskStatuses.InProgress
@@ -86,7 +87,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 				.Where(x => x.ParserTaskId == parserTaskInAction.Id && x.Url != null)
 				.Select(x => x.Url!)
 				.ToListAsync(CancellationToken.None);
-			var needToHandleUrls = allUrls.Except(handledUrls);
+			var needToHandleUrls = allUrls.Except(handledUrls).ToList();
 			foreach (var url in needToHandleUrls)
 			{
 				if (cancellationToken.IsCancellationRequested)
@@ -108,6 +109,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 					rabbitMqService.SendParserTaskCollectMessage(new()
 					{
 						ParserTaskId = parserTaskInAction.Id,
+						Type = ParserTaskCollectMessageTypes.StatusChanged,
 						ParserTaskErrorMessage = new ParserTaskErrorMessage
 						{
 							ErrorMessage = JsonSerializer.Serialize(new
@@ -116,6 +118,10 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 								Content = responseContent
 							}),
 							Url = url
+						},
+						ParserTaskStatusChangedMessage = new ParserTaskStatusChangedMessage()
+						{
+							NewTaskStatus = (int) ParserTaskPartialResultStatuses.Error
 						}
 					});
 					dbContext.ParserTaskPartialResults.Add(new ParserTaskPartialResult()
@@ -138,6 +144,19 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 				};
 				dbContext.ParserTaskPartialResults.Add(newResult);
 				await dbContext.SaveChangesAsync(cancellationToken);
+				rabbitMqService.SendParserTaskCollectMessage(new()
+				{
+					ParserTaskId = parserTaskInAction.Id,
+					Type = ParserTaskCollectMessageTypes.Progress,
+					ParserTaskProgressMessage = new ParserTaskProgressMessage()
+					{
+						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+						CompletedPartUrl = url,
+						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
+							? null
+							: needToHandleUrls[needToHandleUrls.IndexOf(url) + 1]
+					}
+				});
 			}
 
 			await dbContext.ParserTasks
@@ -149,6 +168,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
+				Type = ParserTaskCollectMessageTypes.StatusChanged,
 				ParserTaskStatusChangedMessage = new()
 				{
 					NewTaskStatus = (int) ParserTaskStatuses.Finished
@@ -175,6 +195,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
+				Type = ParserTaskCollectMessageTypes.StatusChanged,
 				ParserTaskStatusChangedMessage = new()
 				{
 					NewTaskStatus = (int) ParserTaskStatuses.Error
@@ -208,6 +229,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 		rabbitMqService.SendParserTaskCollectMessage(new()
 		{
 			ParserTaskId = parserTaskInAction.Id,
+			Type = ParserTaskCollectMessageTypes.StatusChanged,
 			ParserTaskStatusChangedMessage = new()
 			{
 				NewTaskStatus = (int) ParserTaskStatuses.Paused
