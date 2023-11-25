@@ -5,20 +5,20 @@ using Reporter.Contexts;
 using Reporter.ParserTask.Contracts;
 using Share.Contracts;
 
-namespace Reporter.ParserTask.Queries;
+namespace Reporter.ParserTask.Queries.DownloadTaskResults;
 
-public class GetTaskResultsQueryHandler : IRequestHandler<GetTaskResultsQuery, Result<byte[]>>
+public class DownloadTaskResultsQueryHandler : IRequestHandler<DownloadTaskResultsQuery, Result<byte[]>>
 {
 	private readonly AppDbContext _context;
-	private readonly ILogger<GetTaskResultsQueryHandler> _logger;
+	private readonly ILogger<DownloadTaskResultsQueryHandler> _logger;
 
-	public GetTaskResultsQueryHandler(AppDbContext context, ILogger<GetTaskResultsQueryHandler> logger)
+	public DownloadTaskResultsQueryHandler(AppDbContext context, ILogger<DownloadTaskResultsQueryHandler> logger)
 	{
 		_context = context;
 		_logger = logger;
 	}
 
-	public async Task<Result<byte[]>> Handle(GetTaskResultsQuery request, CancellationToken cancellationToken)
+	public async Task<Result<byte[]>> Handle(DownloadTaskResultsQuery request, CancellationToken cancellationToken)
 	{
 		try
 		{

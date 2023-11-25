@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "b599f950-61ec-41fc-aaf6-3b2fff42154b",
+		"_postman_id": "d9a01d7d-b743-4513-b2ec-2bfb46777467",
 		"name": "ParserApi",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "25338424"
+		"_exporter_id": "18129580"
 	},
 	"item": [
 		{
@@ -101,7 +101,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/manage/parser-tasks/b6b5b2f1-6ef7-4687-baec-c1c3941597ff/run",
+					"raw": "http://localhost:5140/api/manage/parser-tasks/a0ab803a-04e4-4c8d-98e4-a21745d178b8/run",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -111,7 +111,7 @@
 						"api",
 						"manage",
 						"parser-tasks",
-						"b6b5b2f1-6ef7-4687-baec-c1c3941597ff",
+						"a0ab803a-04e4-4c8d-98e4-a21745d178b8",
 						"run"
 					]
 				}
@@ -124,7 +124,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/manage/parser-tasks/b6b5b2f1-6ef7-4687-baec-c1c3941597ff/stop",
+					"raw": "http://localhost:5140/api/manage/parser-tasks/a0ab803a-04e4-4c8d-98e4-a21745d178b8/stop",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -134,8 +134,76 @@
 						"api",
 						"manage",
 						"parser-tasks",
-						"b6b5b2f1-6ef7-4687-baec-c1c3941597ff",
+						"a0ab803a-04e4-4c8d-98e4-a21745d178b8",
 						"stop"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetTasks",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5140/api/reports/parser-tasks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"reports",
+						"parser-tasks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetTaskResults",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5140/api/reports/parser-tasks/a0ab803a-04e4-4c8d-98e4-a21745d178b8/results",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"reports",
+						"parser-tasks",
+						"a0ab803a-04e4-4c8d-98e4-a21745d178b8",
+						"results"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DownloadTaskResults",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5140/api/reports/parser-tasks/a0ab803a-04e4-4c8d-98e4-a21745d178b8/results/download",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"reports",
+						"parser-tasks",
+						"a0ab803a-04e4-4c8d-98e4-a21745d178b8",
+						"results",
+						"download"
 					]
 				}
 			},
