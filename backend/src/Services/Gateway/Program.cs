@@ -20,13 +20,6 @@ new WebHostBuilder()
 		s.AddSwaggerForOcelot(builder.Configuration);
 		s.AddOcelot();
 		s.AddSignalR();
-		s.AddCors(options =>
-		{
-			options.AddDefaultPolicy(builder =>
-			{
-				builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
-			});
-		});
 	})
 	// .ConfigureLogging((hostingContext, logging) =>
 	// {
@@ -39,7 +32,6 @@ new WebHostBuilder()
 		{
 			opt.PathToSwaggerGenerator = "/swagger/docs";
 		});
-		app.UseCors();
 		app.UseWebSockets();
 		app.UseOcelot().Wait();
 	})

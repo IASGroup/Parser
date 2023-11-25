@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
-using Tables = Share.Tables;
-
 namespace TaskManager.ParserTasks.Commands.CreateParserTask.Mappers;
+using Tables = Share.Tables;
 
 public class CreateParserTaskResponseProfile : Profile
 {
