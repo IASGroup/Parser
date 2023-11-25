@@ -2,7 +2,6 @@
 using FluentValidation;
 using TaskManager.Contexts;
 using TaskManager.Options;
-using TaskManager.ParserTasks.Share;
 using TaskManager.RabbitMq;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,7 +21,6 @@ builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<IRabbitMqService, RabbitMqService>();
-builder.Services.AddScoped<IParserTaskUtilService, ParserTaskUtilService>();
 builder.Services.AddDbContext<AppDbContext>();
 
 var app = builder.Build();

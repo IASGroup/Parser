@@ -9,7 +9,6 @@ public class CreateParserTaskResponseDto
 	public int StatusId { get; set; }
 	public ParserTaskWebsiteTagsOptions? ParserTaskWebsiteTagsOptions { get; set; }
 	public ParserTaskUrlOptions? ParserTaskUrlOptions { get; set; }
-	public int AllPartsNumber { get; set; }
 }
 
 public class ParserTaskWebsiteTagsOptions

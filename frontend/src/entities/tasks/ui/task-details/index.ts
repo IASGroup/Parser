@@ -1,2 +1,2 @@
 import TaskCardDetails from "./index.vue";
-export default TaskCardDetails;
+export { TaskCardDetails };
