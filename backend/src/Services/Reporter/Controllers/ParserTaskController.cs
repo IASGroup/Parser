@@ -20,7 +20,7 @@ public class ParserTaskController : ControllerBase
 	[HttpGet("{taskId:guid}/results/download")]
 	public async Task<IActionResult> DownloadTaskResultsAsync([FromRoute] Guid taskId)
 	{
-		var query = new DownloadTaskResultsQuery() {TaskId = taskId};
+		var query = new DownloadTaskResultsQuery() { TaskId = taskId };
 		var result = await _mediator.Send(query);
 		return result.IsSuccess
 			? File(result.Value!, "text/plain", "result.txt")
@@ -40,7 +40,7 @@ public class ParserTaskController : ControllerBase
 	[HttpGet("{taskId:guid}/results")]
 	public async Task<ActionResult<IEnumerable<ParserTaskResult>>> GetTaskResultsAsync([FromRoute] Guid taskId)
 	{
-		var query = new GetTaskResultsQuery {ParserTaskId = taskId};
+		var query = new GetTaskResultsQuery { ParserTaskId = taskId };
 		var result = await _mediator.Send(query);
 		return result.IsSuccess
 			? Ok(result.Value)
