@@ -5,7 +5,7 @@ using Reporter.Contexts;
 using Reporter.ParserTask.Contracts;
 using Share.Contracts;
 
-namespace Reporter.ParserTask.Queries;
+namespace Reporter.ParserTask.Queries.GetTaskResults;
 
 public class GetTaskResultsQueryHandler : IRequestHandler<GetTaskResultsQuery, Result<byte[]>>
 {

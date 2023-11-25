@@ -1,8 +1,7 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using Reporter.ParserTask.Contracts;
 
-namespace Reporter.ParserTask.Queries;
+namespace Reporter.ParserTask.Queries.GetTaskResults;
 
 public class GetTaskResultsQuery : IRequest<Result<byte[]>>
 {
