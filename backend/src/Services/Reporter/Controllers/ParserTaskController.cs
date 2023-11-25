@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Reporter.ParserTask.Queries.DownloadTaskResults;
+using Reporter.ParserTask.Queries.GetTask;
 using Reporter.ParserTask.Queries.GetTaskResults;
 using Reporter.ParserTask.Queries.GetTasks;
 
@@ -41,6 +42,16 @@ public class ParserTaskController : ControllerBase
 	public async Task<ActionResult<IEnumerable<ParserTaskResult>>> GetTaskResultsAsync([FromRoute] Guid taskId)
 	{
 		var query = new GetTaskResultsQuery { ParserTaskId = taskId };
+		var result = await _mediator.Send(query);
+		return result.IsSuccess
+			? Ok(result.Value)
+			: BadRequest(result.ErrorMessage);
+	}
+
+	[HttpGet("{taskId:guid}")]
+	public async Task<ActionResult<IEnumerable<ParserTaskResult>>> GetTaskAsync([FromRoute] Guid taskId)
+	{
+		var query = new GetTaskQuery { ParserTaskId = taskId };
 		var result = await _mediator.Send(query);
 		return result.IsSuccess
 			? Ok(result.Value)
