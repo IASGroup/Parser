@@ -1,16 +1,45 @@
 <script setup lang="ts">
 import {storeToRefs} from "pinia";
-import {taskStore, TaskItem, CreateTaskDialog} from "@/entities/tasks";
-import {ref} from "vue";
+import {CreateTaskDialog, TaskItem, TaskListModel, taskStore} from "@/entities/tasks";
+import {onMounted, ref} from "vue";
+import {
+  GetTasksAsync,
+  ParserTaskCollectMessage,
+  ParserTaskCollectMessageTypes,
+  parserTasksHubMessages,
+  parserTasksHubUrl
+} from "@/shared/api";
+import {HubConnectionBuilder} from "@microsoft/signalr"
 
 const {tasks} = storeToRefs(taskStore());
 
 const showCreateTaskDialog = ref<boolean>(false);
+
+onMounted(async () => {
+  const getTasksResponse = await GetTasksAsync();
+  if (getTasksResponse.isSuccess) tasks.value = getTasksResponse.result as Array<TaskListModel>;
+  else console.log(getTasksResponse)
+
+  const hub = new HubConnectionBuilder()
+    .withUrl(parserTasksHubUrl)
+    .build();
+  hub.on(parserTasksHubMessages.NewParserTaskCollectMessage, data => {
+    const message = data as ParserTaskCollectMessage;
+    const task = tasks.value.find(x => x.id === message.parserTaskId);
+    if (!task) return;
+    if (message.type === ParserTaskCollectMessageTypes.StatusChanged) {
+      task.statusId = message.parserTaskStatusChangedMessage?.newTaskStatus;
+    } else if (message.type === ParserTaskCollectMessageTypes.Progress) {
+      task.completedPartsNumber = message.parserTaskProgressMessage.completedPartsNumber;
+    }
+  })
+  await hub.start();
+});
 </script>
 
 <template>
   <v-dialog width="70%" v-model="showCreateTaskDialog">
-    <create-task-dialog/>
+    <create-task-dialog @parser-task-created="showCreateTaskDialog = false"/>
   </v-dialog>
   <v-container>
     <v-layout class="d-flex justify-center">

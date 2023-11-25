@@ -6,7 +6,7 @@ export enum TaskTypes {
 
 export type CreateTaskRequest = {
   url: string,
-  typeId: TaskTypes,
+  typeId: number,
   name: string,
   parserTaskWebsiteTagsOptions: {
     parserTaskWebsiteTags: Array<{
@@ -70,7 +70,7 @@ export type CreateTaskResponse = {
   url: string,
   typeId: TaskTypes,
   name: string,
-  statusId: TaskStatuses
+  statusId: TaskStatuses,
   parserTaskWebsiteTagsOptions: {
     parserTaskWebsiteTags: Array<{
       findOptions: {
@@ -117,7 +117,8 @@ export type CreateTaskResponse = {
       name: string,
       value: string
     }> | null
-  }
+  },
+  allPartsNumber: number
 }
 
 import { axiosApi } from "@/shared/api/axiosApi";

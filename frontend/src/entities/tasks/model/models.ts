@@ -19,6 +19,6 @@ export type TaskListModel = {
   typeId: TaskTypes,
   statusId: TaskStatuses,
   hasError: boolean,
-  competedPartsNumber: number,
+  completedPartsNumber: number,
   allPartsNumber: number
 }

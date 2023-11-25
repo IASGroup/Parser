@@ -1,12 +1,30 @@
 <script setup lang="ts">
 import {ref} from "vue";
 import _ from "lodash"
+import { CreateTaskRequest, CreateTaskAsync } from "@/shared/api";
+import {storeToRefs} from "pinia";
+import {taskStore} from "@/entities/tasks";
+
+const emit = defineEmits(['parserTaskCreated']);
+
+const {tasks} = storeToRefs(taskStore());
 
 const menuTaskTypes = [
   "Задача парсинга АПИ",
   "Задача парсинга текста сайта",
   "Задача парсинга тегов сайта"
 ];
+
+const httpRequestMethods = [
+  "GET",
+  "POST",
+  "PUT",
+  "DELETE"
+]
+
+const selectedHttpRequestMethod = ref<string>(httpRequestMethods[0]);
+
+const postMethodBody = ref<string | null>(null);
 
 const selectedMenuTaskType = ref<string>("Задача парсинга АПИ");
 
@@ -39,7 +57,104 @@ const valueOptionsMenu = [
   "Values",
   "Value"
 ];
+
+const taskUrl = ref<string | null>(null);
+
 const taskName = ref<string | null>(null);
+
+const headers = ref<Array<{
+  name: string,
+  value: string
+}>>([])
+
+const currentAddedHeader = ref<{
+  name: string | null,
+  value: string | null,
+  error: string | null
+}>({
+  name: null,
+  value: null,
+  error: null
+})
+
+const showAddHeaderDialog = ref<boolean>(false);
+
+const tags = ref<Array<{
+  name: string,
+  attributes: Array<{
+    name: string,
+    value: string
+  }>
+}>>([]);
+
+const showAddTagDialog = ref<boolean>(false);
+
+const currentAddedTag = ref<{
+  name: string | null,
+  attributes: Array<{
+    name: string,
+    value: string
+  }>,
+  error: string | null
+}>({
+  name: null,
+  attributes: [],
+  error: null
+});
+
+const showAddTagAttributeDialog = ref<boolean>(false);
+
+const currentAddedAttribute = ref<{
+  name: string | null,
+  value: string | null,
+  error: string | null,
+}>({
+  name: null,
+  value: null,
+  error: null
+})
+
+function addTagAttribute() {
+  if (!currentAddedAttribute.value.name || !currentAddedAttribute.value.value) {
+    currentAddedAttribute.value.error = "Значение не может быть пустым";
+    return;
+  }
+  currentAddedTag.value.attributes.push({
+    name: currentAddedAttribute.value.name,
+    value: currentAddedAttribute.value.value
+  });
+  currentAddedAttribute.value = {
+    name: null,
+    value: null,
+    error: null
+  }
+  showAddTagAttributeDialog.value = false;
+}
+
+function removeTagAttribute(index: number) {
+  currentAddedTag.value.attributes = currentAddedTag.value.attributes.filter(x => x !== currentAddedTag.value.attributes[index]);
+}
+
+function addTag() {
+  if (!currentAddedTag.value.name) {
+    currentAddedTag.value.error = "Название не может быть пустым";
+    return;
+  }
+  tags.value.push({
+    name: currentAddedTag.value.name,
+    attributes: currentAddedTag.value.attributes
+  });
+  currentAddedTag.value = {
+    name: null,
+    attributes: [],
+    error: null
+  };
+  showAddTagDialog.value = false;
+}
+
+function removeTag(index: number) {
+  tags.value = tags.value.filter(x => x !== tags.value[index]);
+}
 
 const taskNameKeyUpEventHandler = _.debounce((event) => taskNameInputValueChangedHandler(event.target.value), 300);
 function taskNameInputValueChangedHandler(newTaskName: string) {
@@ -91,6 +206,7 @@ function urlInputValueChangedHandler(newUrlInputValue: string): void {
     queries.push(...queriesFromSplit);
   }
   urlParts.value = paths.concat(queries);
+  taskUrl.value = newUrlInputValue;
 }
 
 const valueOptionsKeyUpEventHandler = _.debounce((event, urlPartName: string) => valueOptionsInputValueChangedHandler(event.target.value, urlPartName), 300);
@@ -154,18 +270,143 @@ function valueOptionsInputValueChangedHandler(newInputValue: string, urlPartName
   urlPart.valueOptionInputError = null;
   urlPart.valueOptionInputSuccess = true;
 }
+
+function addHeader() {
+  if (!currentAddedHeader.value.name || !currentAddedHeader.value.value){
+    currentAddedHeader.value.error = "Значение не может быть пустым";
+    return;
+  }
+  headers.value.push({
+    name: currentAddedHeader.value.name,
+    value: currentAddedHeader.value.value
+  });
+  currentAddedHeader.value = {
+    name: null,
+    value: null,
+    error: null
+  };
+  showAddHeaderDialog.value = false;
+}
+
+function removeHeader(index: number) {
+  headers.value = headers.value.filter(x => x !== headers.value[index]);
+}
+
+async function createParserTask() : Promise<void> {
+  const createTask : CreateTaskRequest = {
+    name: taskName.value as string,
+    url: taskUrl.value as string,
+    typeId: menuTaskTypes.indexOf(selectedMenuTaskType.value) + 1,
+    parserTaskUrlOptions: {
+      requestMethod: selectedHttpRequestMethod.value,
+      postMethodOptions: selectedHttpRequestMethod.value === "POST" ? {
+        requestBody:  postMethodBody.value as string
+      } : null,
+      paths: urlParts.value.filter(x => x.partType === PartTypes.Path).map(x => {
+        return {
+          name: x.name,
+          valueOptions: x.valueOptions
+        }
+      }),
+      queries: urlParts.value.filter(x => x.partType === PartTypes.Query).map(x => {
+        return {
+          name: x.name,
+          valueOptions: x.valueOptions
+        }
+      }),
+      headers: headers.value as Array<{
+        name: string,
+        value: string
+      }>
+    },
+    parserTaskWebsiteTagsOptions: tags.value.length === 0
+      ? null
+      : {
+        parserTaskWebsiteTags: tags.value.map(x => {
+          return {
+            findOptions: x
+          }
+        })
+      }
+  }
+  const response = await CreateTaskAsync(createTask);
+  if (!response.isSuccess) {
+    console.log(response);
+  }
+  tasks.value.push({
+    name: response.result?.name as string,
+    statusId: response.result?.statusId as number,
+    url: response.result?.url as string,
+    id: response.result?.id as string,
+    typeId: response.result?.typeId as number,
+    hasError: false,
+    allPartsNumber: response.result?.allPartsNumber as number,
+    completedPartsNumber: 0
+  });
+  emit('parserTaskCreated');
+}
 </script>
 
 <template>
+  <v-dialog v-model="showAddHeaderDialog" class="w-75">
+    <v-card class="pa-5">
+      <v-card-title class="text-primary ma-0 pa-0">Добавление заголовка</v-card-title>
+      <div class="d-flex flex-row align-center mt-4">
+        <v-text-field :error="currentAddedHeader.error !== null" hide-details variant="solo" label="Название" v-model="currentAddedHeader.name"/>
+        <v-text-field :error="currentAddedHeader.error !== null" hide-details variant="solo" label="Значение" class="ml-6" v-model="currentAddedHeader.value"/>
+        <v-btn @click="addHeader" class="ml-6" color="primary">Добавить</v-btn>
+      </div>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="showAddTagDialog" class="w-75">
+    <v-card class="pa-5">
+      <v-text-field :error="currentAddedTag.error !== null" variant="solo" class="mb-4" hide-details label="Название тега" v-model="currentAddedTag.name" />
+      <v-card v-if="currentAddedTag.attributes.length !== 0" :flat="true" class="mb-6">
+        <v-card-title class="mb-3">Аттрибуты поиска тега</v-card-title>
+        <v-list class="ma-0 pa-0">
+          <v-list-item class="ma-0 pa-0" v-for="(attribute, index) in currentAddedTag.attributes" :key="index">
+            <v-row class="ma-0 pa-0 d-flex align-center">
+              <v-col class="pa-1 ma-0">
+                <v-text-field hide-details label="Название" :readonly="true" persistent-placeholder variant="solo">{{attribute.name}}</v-text-field>
+              </v-col>
+              <v-col class="pa-1 ma-0">
+                <v-text-field hide-details label="Значение" :readonly="true" persistent-placeholder variant="solo">{{attribute.value}}</v-text-field>
+              </v-col>
+              <v-col cols="2" class="d-flex justify-center">
+                <v-btn @click="removeTagAttribute(index)" color="red">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+                <v-btn class="ml-4" @click="showAddTagAttributeDialog = true" color="primary">
+                  <v-icon>mdi-plus</v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-list-item>
+        </v-list>
+      </v-card>
+      <v-btn v-if="currentAddedTag.attributes.length === 0" @click="showAddTagAttributeDialog = true" color="primary" class="mb-4">Добавить поиск по атрибутам</v-btn>
+      <v-btn @click="addTag" color="primary">Добавить тег</v-btn>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="showAddTagAttributeDialog" class="w-75">
+    <v-card class="pa-5">
+      <v-card-title class="text-primary ma-0 pa-0">Добавление атрибута</v-card-title>
+      <div class="d-flex flex-row align-center mt-4">
+        <v-text-field :error="currentAddedAttribute.error !== null" hide-details variant="solo" label="Название" v-model="currentAddedAttribute.name"/>
+        <v-text-field :error="currentAddedAttribute.error !== null" hide-details variant="solo" label="Значение" class="ml-6" v-model="currentAddedAttribute.value"/>
+        <v-btn @click="addTagAttribute" class="ml-6" color="primary">Добавить</v-btn>
+      </div>
+    </v-card>
+  </v-dialog>
   <v-container>
-    <v-card class="d-flex flex-column pa-5" style="min-height: 70vh">
+    <v-card class="d-flex flex-column pa-5" style="min-height: 70vh; max-height: 90vh; overflow-y: auto">
       <div class="d-flex justify-space-between">
         <v-card-title class="text-primary ma-0 pa-0">Создание задачи парсинга</v-card-title>
         <div style="width: 300px">
           <v-select color="primary" variant="solo" v-model="selectedMenuTaskType" :items="menuTaskTypes"/>
         </div>
       </div>
-      <v-container v-if="selectedMenuTaskType === menuTaskTypes[0]">
+      <v-container class="d-flex flex-column">
         <v-text-field
           variant="solo"
           label="Название задачи"
@@ -175,48 +416,90 @@ function valueOptionsInputValueChangedHandler(newInputValue: string, urlPartName
           variant="solo" v-on:keyup="e => urlKeyUpEventHandler(e)"
           placeholder="https://localhost:3000/users/{user}?todo&part"
           hint="Используйте {param} для установки параметров в пути url"
-          class="mb-3"
         />
-        <v-card v-if="urlParts.length !== 0">
+        <v-card v-if="urlParts.length !== 0" class="mb-5">
           <v-card-title class="text-subtitle-1">Url params</v-card-title>
           <v-list>
             <v-list-item v-for="urlPart in urlParts" :key="urlPart.name">
-             <v-card>
-               <v-row class="ma-0 pa-1 d-flex align-center">
-                 <v-col cols="2" class="d-flex justify-center pa-0">
-                   <v-badge
-                     offset-y="-15" location="left top" :content="urlPart.partType"
-                     :color="urlPart.partType === PartTypes.Path ? 'blue-darken-2' : 'orange-darken-2'"
-                   >
-                     <span class="text-wrap">{{urlPart.name}}</span>
-                   </v-badge>
-                 </v-col>
-                 <v-col class="d-flex justify-center align-center pa-0">
-                   <v-text-field
-                     :error="!!urlPart.valueOptionInputError"
-                     :error-messages="urlPart.valueOptionInputError"
-                     variant="solo"
-                     placeholder="type range [start, end] or values [one, two ..] or value 2"
-                     v-on:keyup="e => valueOptionsKeyUpEventHandler(e, urlPart.name)"
-                     style="margin-top: 22px"
-                   />
-                   <v-icon v-if="urlPart.valueOptionInputSuccess" icon="mdi-check-bold" class="ml-4" color="green"/>
-                 </v-col>
-               </v-row>
-             </v-card>
+              <v-card>
+                <v-row class="ma-0 pa-1 d-flex align-center">
+                  <v-col cols="2" class="d-flex justify-center pa-0">
+                    <v-badge
+                      offset-y="-15" location="left top" :content="urlPart.partType"
+                      :color="urlPart.partType === PartTypes.Path ? 'blue-darken-2' : 'orange-darken-2'"
+                    >
+                      <span class="text-wrap">{{urlPart.name}}</span>
+                    </v-badge>
+                  </v-col>
+                  <v-col class="d-flex justify-center align-center pa-0">
+                    <v-text-field
+                      :error="!!urlPart.valueOptionInputError"
+                      :error-messages="urlPart.valueOptionInputError"
+                      variant="solo"
+                      placeholder="type range [start, end] or values [one, two ..] or value 2"
+                      v-on:keyup="e => valueOptionsKeyUpEventHandler(e, urlPart.name)"
+                      style="margin-top: 22px"
+                    />
+                    <v-icon v-if="urlPart.valueOptionInputSuccess" icon="mdi-check-bold" class="ml-4" color="green"/>
+                  </v-col>
+                </v-row>
+              </v-card>
             </v-list-item>
           </v-list>
         </v-card>
-      </v-container>
-      <v-container v-else-if="selectedMenuTaskType === menuTaskTypes[1]">
-        Test 2
-      </v-container>
-      <v-container v-else>
-        Test 3
+        <v-select variant="solo" label="Метод запросов" v-model="selectedHttpRequestMethod" :items="httpRequestMethods"/>
+        <v-textarea v-model="postMethodBody" variant="solo" label="Тело запроса" v-if="selectedHttpRequestMethod === 'POST'"></v-textarea>
+        <v-card v-if="headers.length !== 0" :flat="true">
+          <v-card-title class="mb-3">Заголовки запроса</v-card-title>
+          <v-list class="ma-0 pa-0">
+            <v-list-item class="ma-0 pa-0" v-for="(header, index) in headers" :key="index">
+              <v-row class="ma-0 pa-0 d-flex align-center">
+                <v-col class="pa-1 ma-0">
+                  <v-text-field hide-details label="Название" :readonly="true" persistent-placeholder variant="solo">{{header.name}}</v-text-field>
+                </v-col>
+                <v-col class="pa-1 ma-0">
+                  <v-text-field hide-details label="Значение" :readonly="true" persistent-placeholder variant="solo">{{header.value}}</v-text-field>
+                </v-col>
+                <v-col cols="2" class="d-flex justify-center">
+                  <v-btn @click="removeHeader(index)" color="red">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                  <v-btn class="ml-4" @click="showAddHeaderDialog = true" color="primary">
+                    <v-icon>mdi-plus</v-icon>
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-list-item>
+          </v-list>
+        </v-card>
+        <v-btn width="500px" v-if="headers.length === 0" @click="showAddHeaderDialog = true" color="primary">Добавить заголовок запроса</v-btn>
+        <v-card v-if="tags.length !== 0 && selectedMenuTaskType === menuTaskTypes[2]" :flat="true" class="mt-4">
+          <v-card-title>Теги которые необходимо спарсить</v-card-title>
+          <v-list class="ma-0 pa-0">
+            <v-list-item class="ma-0 pa-0" v-for="(tag, index) in tags" :key="index">
+              <v-row class="ma-0 pa-0 d-flex align-center">
+                <v-col>
+                  <v-text-field hide-details label="Описание тега" :readonly="true" persistent-placeholder variant="solo">
+                    {{`<${tag.name} * ${tag.attributes.map(x => `${x.name}="${x.value}"`).join(' ')} * >*<\/${tag.name}>`}}
+                  </v-text-field>
+                </v-col>
+                <v-col cols="2" class="d-flex justify-center">
+                  <v-btn @click="removeTag(index)" color="red">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                  <v-btn class="ml-4" @click="showAddTagDialog = true" color="primary">
+                    <v-icon>mdi-plus</v-icon>
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-list-item>
+          </v-list>
+        </v-card>
+        <v-btn width="500px" v-if="tags.length === 0 && selectedMenuTaskType === menuTaskTypes[2]" @click="showAddTagDialog = true" class="mt-4" color="primary">Добавить тег который необходимо спарсить</v-btn>
       </v-container>
       <v-spacer/>
       <v-card-actions class="pa-0 ma-0">
-        <v-btn :block="true" color="primary" variant="flat">Создать</v-btn>
+        <v-btn @click="createParserTask" :block="true" color="primary" variant="flat">Создать</v-btn>
       </v-card-actions>
     </v-card>
   </v-container>

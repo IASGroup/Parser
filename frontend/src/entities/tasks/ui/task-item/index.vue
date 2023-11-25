@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {TaskListModel, TaskStatuses} from "@/entities/tasks";
+import { RunTaskAsync, StopTaskAsync } from "@/shared/api";
 import {computed} from "vue";
 
 const {task} = defineProps<{ task: TaskListModel }>();
@@ -38,6 +39,20 @@ const chipModel = computed(() => {
   };
 })
 
+async function runTask(taskId: string): Promise<void> {
+  const response = await RunTaskAsync(taskId);
+  if (!response.isSuccess || !response.result){
+    console.log(response);
+  }
+}
+
+async function stopTask(taskId: string): Promise<void> {
+  const response = await StopTaskAsync(taskId);
+  if (!response.isSuccess || !response.result){
+    console.log(response);
+  }
+}
+
 </script>
 
 <template>
@@ -52,7 +67,7 @@ const chipModel = computed(() => {
           <v-slider :disabled="task.statusId !== TaskStatuses.InProgress" :readonly="true" :hide-details="true" thumb-label="always" thumb-size="11"
             color="primary"
             :max="task.allPartsNumber"
-            :model-value="task.competedPartsNumber"
+            :model-value="task.completedPartsNumber"
           >
             <template v-slot:append>
               {{ task.allPartsNumber }}
@@ -62,7 +77,7 @@ const chipModel = computed(() => {
       </v-col>
       <div class="d-flex justify-center">
         <v-col>
-          <v-btn :disabled="task.statusId === TaskStatuses.Finished" icon>
+          <v-btn @click="task.statusId === TaskStatuses.InProgress ? stopTask(task.id) : runTask(task.id)" :disabled="task.statusId === TaskStatuses.Finished" icon>
             <v-icon v-if="!(task.statusId === TaskStatuses.InProgress)" size="30" color="green">mdi-play-circle-outline</v-icon>
             <v-progress-circular v-else color="red" width="2" indeterminate>
               <v-icon color="red">mdi-stop</v-icon>

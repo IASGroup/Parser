@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@mdi/font": "7.0.96",
+    "@microsoft/signalr": "^8.0.0",
     "axios": "^1.6.1",
     "lodash": "^4.17.21",
     "pinia": "^2.0.23",
