@@ -36,5 +36,26 @@ namespace Unlocker.Controllers
                 return BadRequest($"Failed to get URL content by Tor: {ex.Message}");
             }
         }
+
+        [HttpGet("ChangeTorIpUrl")]
+        public async Task<IActionResult> ChangeTorIP(string url)
+        {
+            try
+            {
+                await _torControl.SignalNewNymAsync();
+
+                await Task.Delay(5000);
+
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                string responseContent = await response.Content.ReadAsStringAsync();
+
+                return Ok(responseContent);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Failed to get URL content with new Tor IP: {ex.Message}");
+            }
+        }
     }
 }
