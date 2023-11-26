@@ -37,7 +37,7 @@ public class DownloadTaskResultsQueryHandler : IRequestHandler<DownloadTaskResul
 				)
 				.Select(x => x.Content)
 				.ToListAsync(cancellationToken);
-			return Result<byte[]>.Success(Encoding.ASCII.GetBytes(string.Concat(taskResults)));
+			return Result<byte[]>.Success(Encoding.UTF8.GetBytes(string.Concat(taskResults)));
 		}
 		catch (Exception e)
 		{
