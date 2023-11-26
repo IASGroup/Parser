@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Reporter.Contexts;
-using TaskManager.Options;
+using Reporter.Options;
+using Reporter.ParserTask.Share;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Services.AddLogging();
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection(DbOptions.Name));
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
 builder.Services.AddDbContext<AppDbContext>();
+builder.Services.AddScoped<IParserTaskUtilService, ParserTaskUtilService>();
 
 var app = builder.Build();
 

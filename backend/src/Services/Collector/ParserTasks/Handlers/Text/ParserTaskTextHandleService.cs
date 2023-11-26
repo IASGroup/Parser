@@ -33,223 +33,243 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 		_parserTaskUtilService = parserTaskUtilService;
 	}
 
-    public async Task Handle(ParserTask parserTaskInAction, CancellationToken cancellationToken)
-    {
-        using var taskScope = _serviceProvider.CreateScope();
-        var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
-        var rabbitMqService = taskScope.ServiceProvider.GetService<IRabbitMqService>();
+	public async Task Handle(ParserTask parserTaskInAction, CancellationToken cancellationToken)
+	{
+		using var taskScope = _serviceProvider.CreateScope();
+		var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
+		var rabbitMqService = taskScope.ServiceProvider.GetService<IRabbitMqService>();
 
-        if (dbContext is null || rabbitMqService is null)
-        {
-            _logger.LogError(
-                message: "Необходимый сервис не найден"
-            );
-            return;
-        }
+		if (dbContext is null || rabbitMqService is null)
+		{
+			_logger.LogError(
+				message: "Необходимый сервис не найден"
+			);
+			return;
+		}
 
-        if (cancellationToken.IsCancellationRequested)
-        {
-            await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
-            return;
-        }
+		if (cancellationToken.IsCancellationRequested)
+		{
+			await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
+			return;
+		}
 
-        try
-        {
-            _logger.LogInformation($"Начало задачи парсинга: {parserTaskInAction.Id}");
+		try
+		{
+			_logger.LogInformation($"Начало задачи парсинга: {parserTaskInAction.Id}");
 
-            await dbContext.ParserTasks
-                .Where(x => x.Id == parserTaskInAction.Id)
-                .ExecuteUpdateAsync(x => x.SetProperty(
-                    y => y.StatusId, (int)ParserTaskStatuses.InProgress),
-                    cancellationToken: cancellationToken
-                );
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
-                return;
-            }
-            rabbitMqService.SendParserTaskCollectMessage(new()
-            {
-                ParserTaskId = parserTaskInAction.Id,
-                ParserTaskStatusChangedMessage = new()
-                {
-                    NewTaskStatus = (int)ParserTaskStatuses.InProgress
-                }
-            });
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
-                return;
-            }
+			await dbContext.ParserTasks
+				.Where(x => x.Id == parserTaskInAction.Id)
+				.ExecuteUpdateAsync(x => x.SetProperty(
+					y => y.StatusId, (int) ParserTaskStatuses.InProgress),
+					cancellationToken: cancellationToken
+				);
+			if (cancellationToken.IsCancellationRequested)
+			{
+				await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
+				return;
+			}
+			rabbitMqService.SendParserTaskCollectMessage(new()
+			{
+				ParserTaskId = parserTaskInAction.Id,
+				Type = ParserTaskCollectMessageTypes.StatusChanged,
+				ParserTaskStatusChangedMessage = new()
+				{
+					NewTaskStatus = (int) ParserTaskStatuses.InProgress
+				}
+			});
+			if (cancellationToken.IsCancellationRequested)
+			{
+				await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
+				return;
+			}
 
-            var allUrls = _parserTaskUtilService.GetParserTaskUrls(parserTaskInAction).ToList();
-            var handledUrls = await dbContext.ParserTaskPartialResults
-                .Where(x => x.ParserTaskId == parserTaskInAction.Id && x.Url != null)
-                .Select(x => x.Url!)
-                .ToListAsync(CancellationToken.None);
-            var needToHandleUrls = allUrls.Except(handledUrls);
-            foreach (var url in needToHandleUrls)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
-                    return;
-                }
-                var request = new HttpRequestMessage
-                {
-                    Method = _parserTaskUtilService.GetHttpMethodByName(parserTaskInAction.ParserTaskUrlOptions!.RequestMethod),
-                    RequestUri = new Uri(url)
-                };
-                var response = await _httpClient.SendAsync(request, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                string[] classesToRemove = { "ad", "advertisement", "promo" }; // Здесь список классов рекламы
-                string[] tagsToRemove = { "script", "iframe", "img", "head", "footer", "nav","a","table" }; //список тегов для удаления
-                HtmlDocument doc = new HtmlDocument();
-                doc.LoadHtml(responseContent);
-                //Полностью удаляем мусорные теги
-                foreach (var tag in tagsToRemove)
-                {
-                    HtmlNodeCollection nodesToRemove = doc.DocumentNode.SelectNodes($"//{tag}");
-                    if (nodesToRemove != null)
-                    {
-                        foreach (HtmlNode node in nodesToRemove)
-                        {
-                            node.Remove(); 
-                        }
-                    }
-                }
-                //Удаляем теги по классам
-                RemoveElementsByClass(doc.DocumentNode, classesToRemove);
-                responseContent = doc.DocumentNode.OuterHtml;
-                string pattern = "<.*?>";
-                responseContent = Regex.Replace(responseContent, pattern, "");
-                
+			var allUrls = _parserTaskUtilService.GetParserTaskUrls(parserTaskInAction).ToList();
+			var handledUrls = await dbContext.ParserTaskPartialResults
+				.Where(x => x.ParserTaskId == parserTaskInAction.Id && x.Url != null)
+				.Select(x => x.Url!)
+				.ToListAsync(CancellationToken.None);
+			var needToHandleUrls = allUrls.Except(handledUrls).ToList();
+			foreach (var url in needToHandleUrls)
+			{
+				if (cancellationToken.IsCancellationRequested)
+				{
+					await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
+					return;
+				}
+				var request = new HttpRequestMessage
+				{
+					Method = _parserTaskUtilService.GetHttpMethodByName(parserTaskInAction.ParserTaskUrlOptions!.RequestMethod),
+					RequestUri = new Uri(url)
+				};
+				var response = await _httpClient.SendAsync(request, cancellationToken);
+				var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 				if (!response.IsSuccessStatusCode)
-                {
-                    rabbitMqService.SendParserTaskCollectMessage(new()
-                    {
-                        ParserTaskId = parserTaskInAction.Id,
-                        ParserTaskErrorMessage = new ParserTaskErrorMessage
-                        {
-                            ErrorMessage = JsonSerializer.Serialize(new
-                            {
-                                response.StatusCode,
-                                Content = responseContent
-                            }),
-                            Url = url
-                        }
-                    });
-                    dbContext.ParserTaskPartialResults.Add(new ParserTaskPartialResult()
-                    {
-                        StatusId = (int)ParserTaskPartialResultStatuses.Error,
-                        Url = url,
-                        Content = responseContent,
-                        ParserTaskId = parserTaskInAction.Id
-                    });
-                    await dbContext.SaveChangesAsync(cancellationToken);
-                    return;
-                }
-                var newResult = new ParserTaskPartialResult
-                {
-                    ParserTaskId = parserTaskInAction.Id,
-                    Url = url,
-                    StatusId = (int)ParserTaskPartialResultStatuses.Success,
-                    Content = responseContent
-                };
-                dbContext.ParserTaskPartialResults.Add(newResult);
-                await dbContext.SaveChangesAsync(cancellationToken);
-            }
-            await dbContext.ParserTasks
-                .Where(x => x.Id == parserTaskInAction.Id)
-                .ExecuteUpdateAsync(x => x.SetProperty(
-                    y => y.StatusId, (int)ParserTaskStatuses.Finished),
-                    cancellationToken: cancellationToken
-                );
-            rabbitMqService.SendParserTaskCollectMessage(new()
-            {
-                ParserTaskId = parserTaskInAction.Id,
-                ParserTaskStatusChangedMessage = new()
-                {
-                    NewTaskStatus = (int)ParserTaskStatuses.Finished
-                }
-            });
-            _logger.LogInformation($"Конец задачи парсинга: {parserTaskInAction.Id}");
-        }
-        catch (Exception e)
-        {
-            var errorMessage = $"Ошибка при выполнении задачи парсинга: {parserTaskInAction.Name}";
+				{
+					rabbitMqService.SendParserTaskCollectMessage(new()
+					{
+						ParserTaskId = parserTaskInAction.Id,
+						Type = ParserTaskCollectMessageTypes.StatusChanged,
+						ParserTaskErrorMessage = new ParserTaskErrorMessage
+						{
+							ErrorMessage = JsonSerializer.Serialize(new
+							{
+								response.StatusCode,
+								Content = responseContent
+							}),
+							Url = url
+						},
+						ParserTaskStatusChangedMessage = new ParserTaskStatusChangedMessage
+						{
+							NewTaskStatus = (int) ParserTaskPartialResultStatuses.Error
+						}
+					});
+					dbContext.ParserTaskPartialResults.Add(new ParserTaskPartialResult()
+					{
+						StatusId = (int) ParserTaskPartialResultStatuses.Error,
+						Url = url,
+						Content = responseContent,
+						ParserTaskId = parserTaskInAction.Id
+					});
+					await dbContext.SaveChangesAsync(cancellationToken);
+					return;
+				}
 
-            await dbContext.ParserTasks
-                .Where(x => x.Id == parserTaskInAction.Id)
-                .ExecuteUpdateAsync(x => x.SetProperty(
-                    y => y.StatusId, (int)ParserTaskStatuses.Error),
-                    cancellationToken: CancellationToken.None
-                );
+				string[] classesToRemove = { "ad", "advertisement", "promo" }; // Здесь список классов рекламы
+				string[] tagsToRemove = { "script", "iframe", "img", "head", "footer", "nav", "a", "table" }; //список тегов для удаления
+				HtmlDocument doc = new HtmlDocument();
+				doc.LoadHtml(responseContent);
+				//Полностью удаляем мусорные теги
+				foreach (var tag in tagsToRemove)
+				{
+					HtmlNodeCollection nodesToRemove = doc.DocumentNode.SelectNodes($"//{tag}");
+					if (nodesToRemove != null)
+					{
+						foreach (HtmlNode node in nodesToRemove)
+						{
+							node.Remove();
+						}
+					}
+				}
+				//Удаляем теги по классам
+				RemoveElementsByClass(doc.DocumentNode, classesToRemove);
+				responseContent = doc.DocumentNode.OuterHtml;
+				string pattern = "<.*?>";
+				responseContent = Regex.Replace(responseContent, pattern, "");
 
-            rabbitMqService.SendParserTaskCollectMessage(new()
-            {
-                ParserTaskId = parserTaskInAction.Id,
-                ParserTaskStatusChangedMessage = new()
-                {
-                    NewTaskStatus = (int)ParserTaskStatuses.Error
-                },
-                ParserTaskErrorMessage = new()
-                {
-                    ErrorMessage = errorMessage
-                }
-            });
+				var newResult = new ParserTaskPartialResult
+				{
+					ParserTaskId = parserTaskInAction.Id,
+					Url = url,
+					StatusId = (int) ParserTaskPartialResultStatuses.Success,
+					Content = responseContent
+				};
+				dbContext.ParserTaskPartialResults.Add(newResult);
+				await dbContext.SaveChangesAsync(cancellationToken);
+				rabbitMqService.SendParserTaskCollectMessage(new()
+				{
+					ParserTaskId = parserTaskInAction.Id,
+					Type = ParserTaskCollectMessageTypes.Progress,
+					ParserTaskProgressMessage = new ParserTaskProgressMessage()
+					{
+						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+						CompletedPartUrl = url,
+						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
+							? null
+							: needToHandleUrls[needToHandleUrls.IndexOf(url) + 1]
+					}
+				});
+			}
+			await dbContext.ParserTasks
+				.Where(x => x.Id == parserTaskInAction.Id)
+				.ExecuteUpdateAsync(x => x.SetProperty(
+					y => y.StatusId, (int) ParserTaskStatuses.Finished),
+					cancellationToken: cancellationToken
+				);
+			rabbitMqService.SendParserTaskCollectMessage(new()
+			{
+				ParserTaskId = parserTaskInAction.Id,
+				Type = ParserTaskCollectMessageTypes.StatusChanged,
+				ParserTaskStatusChangedMessage = new()
+				{
+					NewTaskStatus = (int) ParserTaskStatuses.Finished
+				}
+			});
+			_logger.LogInformation($"Конец задачи парсинга: {parserTaskInAction.Id}");
+		}
+		catch (Exception e)
+		{
+			var errorMessage = $"Ошибка при выполнении задачи парсинга: {parserTaskInAction.Name}";
 
-            _logger.LogError(
-                exception: e,
-                message: errorMessage,
-                args: new { parserTaskInAction }
-            );
-        }
-    }
+			await dbContext.ParserTasks
+				.Where(x => x.Id == parserTaskInAction.Id)
+				.ExecuteUpdateAsync(x => x.SetProperty(
+					y => y.StatusId, (int) ParserTaskStatuses.Error),
+					cancellationToken: CancellationToken.None
+				);
 
-    private async Task PauseAsync(
-        AppDbContext dbContext,
-        ParserTask parserTaskInAction,
-        IRabbitMqService rabbitMqService
-    )
-    {
-        await dbContext.ParserTasks
-            .Where(x => x.Id == parserTaskInAction.Id)
-            .ExecuteUpdateAsync(x => x.SetProperty(
-                y => y.StatusId, (int)ParserTaskStatuses.Paused)
-            );
+			rabbitMqService.SendParserTaskCollectMessage(new()
+			{
+				ParserTaskId = parserTaskInAction.Id,
+				Type = ParserTaskCollectMessageTypes.StatusChanged,
+				ParserTaskStatusChangedMessage = new()
+				{
+					NewTaskStatus = (int) ParserTaskStatuses.Error
+				},
+				ParserTaskErrorMessage = new()
+				{
+					ErrorMessage = errorMessage
+				}
+			});
 
-        rabbitMqService.SendParserTaskCollectMessage(new()
-        {
-            ParserTaskId = parserTaskInAction.Id,
-            ParserTaskStatusChangedMessage = new()
-            {
-                NewTaskStatus = (int)ParserTaskStatuses.Paused
-            }
-        });
-    }
-    static void RemoveElementsByClass(HtmlNode node, string[] classesToRemove)
-        {
-            if (node.NodeType == HtmlNodeType.Element && node.HasAttributes && node.Attributes.Contains("class"))
-            {
-                var classAttributeValue = node.GetAttributeValue("class", "");
-                var nodeClasses = classAttributeValue.Split(' ');
+			_logger.LogError(
+				exception: e,
+				message: errorMessage,
+				args: new { parserTaskInAction }
+			);
+		}
+	}
 
-                if (nodeClasses.Any(c => classesToRemove.Contains(c)))
-                {
-                    node.Remove();
-                    return;
-                }
-            }
+	private async Task PauseAsync(
+		AppDbContext dbContext,
+		ParserTask parserTaskInAction,
+		IRabbitMqService rabbitMqService
+	)
+	{
+		await dbContext.ParserTasks
+			.Where(x => x.Id == parserTaskInAction.Id)
+			.ExecuteUpdateAsync(x => x.SetProperty(
+				y => y.StatusId, (int) ParserTaskStatuses.Paused)
+			);
 
-            for (int i = node.ChildNodes.Count - 1; i >= 0; i--)
-            {
-                RemoveElementsByClass(node.ChildNodes[i], classesToRemove);
-            }
-        }
+		rabbitMqService.SendParserTaskCollectMessage(new()
+		{
+			ParserTaskId = parserTaskInAction.Id,
+			Type = ParserTaskCollectMessageTypes.StatusChanged,
+			ParserTaskStatusChangedMessage = new()
+			{
+				NewTaskStatus = (int) ParserTaskStatuses.Paused
+			}
+		});
+	}
+	static void RemoveElementsByClass(HtmlNode node, string[] classesToRemove)
+	{
+		if (node.NodeType == HtmlNodeType.Element && node.HasAttributes && node.Attributes.Contains("class"))
+		{
+			var classAttributeValue = node.GetAttributeValue("class", "");
+			var nodeClasses = classAttributeValue.Split(' ');
+
+			if (nodeClasses.Any(c => classesToRemove.Contains(c)))
+			{
+				node.Remove();
+				return;
+			}
+		}
+
+		for (int i = node.ChildNodes.Count - 1; i >= 0; i--)
+		{
+			RemoveElementsByClass(node.ChildNodes[i], classesToRemove);
+		}
+	}
 
 
 }
-
-

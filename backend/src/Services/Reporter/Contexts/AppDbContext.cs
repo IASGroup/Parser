@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Reporter.Options;
 using Share.Tables;
-using TaskManager.Options;
 
 namespace Reporter.Contexts;
 

@@ -1,4 +1,4 @@
-﻿namespace TaskManager.Options;
+﻿namespace Reporter.Options;
 
 public class DbOptions
 {

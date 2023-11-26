@@ -1,27 +1,9 @@
-import { defineStore } from "pinia";
-import { ref, reactive } from "vue";
-import { Task } from "./models";
+import {defineStore} from "pinia";
+import {ref} from "vue";
+import {TaskListModel} from "./models";
 
 export const useTaskStore = defineStore("tasks", () => {
-  const tasks = ref<Array<Task>>([]);
-
-  tasks.value.push({
-    id: "id",
-    name: "first task",
-    status: {
-      id: 1,
-      description: "descript",
-      key: "key",
-    },
-    statusId: 1,
-    url: "url",
-    type: {
-      id: 1,
-      description: "descript",
-      name: "name",
-    },
-  });
-
+  const tasks = ref<Array<TaskListModel>>([]);
   return {
     tasks,
   };
