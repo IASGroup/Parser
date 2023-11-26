@@ -16,7 +16,7 @@ public class DownloadTaskResultQueryHandler : IRequestHandler<DownloadTaskResult
 		_context = context;
 		_logger = logger;
 	}
-	
+
 	public async Task<Result<byte[]>> Handle(DownloadTaskResultQuery request, CancellationToken cancellationToken)
 	{
 		try
@@ -35,8 +35,8 @@ public class DownloadTaskResultQueryHandler : IRequestHandler<DownloadTaskResult
 				cancellationToken: cancellationToken
 			);
 
-			return result is null 
-				? Result<byte[]>.Failure("Результат не найден") 
+			return result is null
+				? Result<byte[]>.Failure("Результат не найден")
 				: Result<byte[]>.Success(Encoding.UTF8.GetBytes(string.Concat(result.Content)));
 		}
 		catch (Exception e)
