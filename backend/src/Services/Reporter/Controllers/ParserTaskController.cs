@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Reporter.ParserTask.Queries.DownloadTaskResult;
 using Reporter.ParserTask.Queries.DownloadTaskResults;
 using Reporter.ParserTask.Queries.GetTask;
 using Reporter.ParserTask.Queries.GetTaskResults;
@@ -55,6 +56,15 @@ public class ParserTaskController : ControllerBase
 		var result = await _mediator.Send(query);
 		return result.IsSuccess
 			? Ok(result.Value)
+			: BadRequest(result.ErrorMessage);
+	}
+
+	[HttpGet("{taskId:guid}/results/{resultId}/download")]
+	public async Task<IActionResult> DownloadTaskPartialResultAsync([FromRoute] DownloadTaskResultQuery query)
+	{
+		var result = await _mediator.Send(query);
+		return result.IsSuccess
+			? File(result.Value!, "text/plain", "result.txt")
 			: BadRequest(result.ErrorMessage);
 	}
 }
