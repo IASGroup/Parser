@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Unlocker.Contracts;
+using Unlocker.Services;
 
 namespace Unlocker.Controllers
 {
@@ -10,19 +9,25 @@ namespace Unlocker.Controllers
 	[Route("api/tor")]
 	public class UnlockerController : Controller
 	{
-		private readonly HttpClient _httpClient;
-		private readonly TorControl _torControl;
+		private readonly ITorConfigService _torConfigService;
 
-		public UnlockerController()
+		public UnlockerController(ITorConfigService torConfigService)
 		{
-			var handler = new HttpClientHandler
-			{
-				Proxy = new WebProxy("socks5://localhost:9050")
-			};
+			_torConfigService = torConfigService;
+		}
 
-			_httpClient = new HttpClient(handler);
-			_httpClient.Timeout = TimeSpan.FromSeconds(10);
-			_torControl = new TorControl("localhost", 9050, "");
+		[HttpPost("setup")]
+		public async Task<IActionResult> SetupTorConnectionAsync([FromBody] SetupTorConnectionDto request)
+		{
+			try
+			{
+				_ = _torConfigService.ResetConfig(request);
+				return Ok(await GetTorIpAddressAsync());
+			}
+			catch (Exception e)
+			{
+				return BadRequest("Setup failure");
+			}
 		}
 
 		[HttpPost("download")]
@@ -30,6 +35,12 @@ namespace Unlocker.Controllers
 		{
 			try
 			{
+				if (!_torConfigService.IsTorConfigured())
+				{
+					return BadRequest($"Tor is not configured");
+				}
+
+				var config = _torConfigService.GetConfig();
 				var request = new HttpRequestMessage()
 				{
 					RequestUri = new Uri(requestDto.BaseUrl),
@@ -40,7 +51,7 @@ namespace Unlocker.Controllers
 						"PUT" => HttpMethod.Put,
 						"DELETE" => HttpMethod.Delete,
 						"PATCH" => HttpMethod.Patch,
-						_ => throw new ArgumentException("Метод запроса не найден", nameof(requestDto.MethodName))
+						_ => throw new ArgumentException("MethodName not found", nameof(requestDto.MethodName))
 					},
 					Content = requestDto.Body is null ? null : new StringContent(requestDto.Body)
 				};
@@ -49,7 +60,7 @@ namespace Unlocker.Controllers
 					request.Headers.Add(header.Name, header.Value);
 				}
 
-				var response = await _httpClient.SendAsync(request);
+				var response = await config.HttpClient!.SendAsync(request);
 				response.EnsureSuccessStatusCode();
 				var content = await response.Content.ReadAsStringAsync();
 				return Content(content);
@@ -65,11 +76,14 @@ namespace Unlocker.Controllers
 		{
 			try
 			{
-				await _torControl.SignalNewNymAsync();
-
-				await Task.Delay(5000);
-
-				return Ok(GetTorIpAddress());
+				if (!_torConfigService.IsTorConfigured())
+				{
+					return BadRequest($"Tor is not configured");
+				}
+				var config = _torConfigService.GetConfig();
+				await Task.Delay(1000);
+				await config.TorControl!.SignalNewNymAsync();
+				return Ok(await GetTorIpAddressAsync());
 			}
 			catch (Exception ex)
 			{
@@ -77,11 +91,13 @@ namespace Unlocker.Controllers
 			}
 		}
 
-		private string GetTorIpAddress()
+		private async Task<string> GetTorIpAddressAsync()
 		{
 			try
 			{
-				var response = _httpClient.GetAsync("https://check.torproject.org/").Result;
+				if (!_torConfigService.IsTorConfigured()) throw new ArgumentException("Tor is not configured");
+				var config = _torConfigService.GetConfig();
+				var response = await config.HttpClient!.GetAsync("https://check.torproject.org/");
 				var result = response.Content.ReadAsStringAsync().Result;
 				var regex = new Regex(@"([0-9]?[0-9]?[0-9]\.[0-9]?[0-9]?[0-9]\.[0-9]?[0-9]?[0-9]\.[0-9]?[0-9]?[0-9])");
 				return regex.Match(result).Value;

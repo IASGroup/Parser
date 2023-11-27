@@ -23,7 +23,6 @@ namespace Unlocker
 			var authCommand = $"AUTHENTICATE \"{_password}\"\r\n";
 			var authBuffer = Encoding.ASCII.GetBytes(authCommand);
 			await stream.WriteAsync(authBuffer);
-
 			var commandBuffer = Encoding.ASCII.GetBytes($"{command}\r\n");
 			await stream.WriteAsync(commandBuffer);
 		}

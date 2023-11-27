@@ -35,9 +35,3 @@ services:
     build:
       context: ../backend/src
       dockerfile: ./Services/Migrations/Dockerfile
-
-  tor:
-    image: osminogin/tor-simple
-    ports:
-      - "9050:9050"
-    restart: always
