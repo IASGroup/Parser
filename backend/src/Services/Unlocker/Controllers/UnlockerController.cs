@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace Unlocker.Controllers
 {
@@ -46,7 +47,7 @@ namespace Unlocker.Controllers
 
                 await Task.Delay(5000);
 
-                return Ok();
+                return Ok(GetTorIpAddress());
             }
             catch (Exception ex)
             {
@@ -54,21 +55,26 @@ namespace Unlocker.Controllers
             }
         }
 
-        //[HttpGet("gettorip")]
-        //public string GetTorIpAddress()
-        //{
-        //    try
-        //    {
-        //        var response = _httpClient.GetAsync("https://api.ipify.org").Result;
-        //
-        //        var ipAddress = response.Content.ReadAsStringAsync().Result;
-        //
-        //        return ipAddress;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return $"Failed to get Tor IP address: {ex.Message}";
-        //    }
-        //}
+        [HttpGet("gettorip")]
+        public string GetTorIpAddress()
+        {
+            try
+            {
+                var response = _httpClient.GetAsync("https://check.torproject.org/").Result;
+                var result = response.Content.ReadAsStringAsync().Result;
+
+                var regex = new Regex(@"([0-9]?[0-9]?[0-9]\.[0-9]?[0-9]?[0-9]\.[0-9]?[0-9]?[0-9]\.[0-9]?[0-9]?[0-9])");
+                var match = regex.Match(result);
+                string extractedIP;
+
+                extractedIP = match.Value;
+
+                return extractedIP;
+            }
+            catch (Exception ex)
+            {
+                return $"Failed to get Tor IP address: {ex.Message}";
+            }
+        }
     }
 }
