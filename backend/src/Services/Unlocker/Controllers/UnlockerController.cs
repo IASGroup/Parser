@@ -4,7 +4,7 @@ using System.Net;
 namespace Unlocker.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/tor")]
     public class UnlockerController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -21,8 +21,8 @@ namespace Unlocker.Controllers
             _torControl = new TorControl("localhost", 9050, "");
         }
 
-        [HttpGet("GetTorUrl")]
-        public async Task<IActionResult> GetTorContent(string url)
+        [HttpGet("download")]
+        public async Task<IActionResult> GetTorContentAsync([FromQuery] string url)
         {
             try
             {
@@ -37,8 +37,8 @@ namespace Unlocker.Controllers
             }
         }
 
-        [HttpGet("ChangeTorIpUrl")]
-        public async Task<IActionResult> ChangeTorIP(string url)
+        [HttpPost("changeip")]
+        public async Task<IActionResult> ChangeTorIPAsync()
         {
             try
             {
@@ -46,16 +46,29 @@ namespace Unlocker.Controllers
 
                 await Task.Delay(5000);
 
-                var response = await _httpClient.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                string responseContent = await response.Content.ReadAsStringAsync();
-
-                return Ok(responseContent);
+                return Ok();
             }
             catch (Exception ex)
             {
-                return BadRequest($"Failed to get URL content with new Tor IP: {ex.Message}");
+                return BadRequest($"Failed to change Tor IP: {ex.Message}");
             }
         }
+
+        //[HttpGet("gettorip")]
+        //public string GetTorIpAddress()
+        //{
+        //    try
+        //    {
+        //        var response = _httpClient.GetAsync("https://api.ipify.org").Result;
+        //
+        //        var ipAddress = response.Content.ReadAsStringAsync().Result;
+        //
+        //        return ipAddress;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return $"Failed to get Tor IP address: {ex.Message}";
+        //    }
+        //}
     }
 }
