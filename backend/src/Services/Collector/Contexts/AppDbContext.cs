@@ -21,7 +21,9 @@ public class AppDbContext : DbContext
 	public DbSet<ParserTaskWebsiteTag> ParserTaskWebsiteTag { get; set; }
 	public DbSet<FindOptions> FindOptions { get; set; }
 
-	
+	public DbSet<TagAttribute> TagAttribute { get; set; }
+
+
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
