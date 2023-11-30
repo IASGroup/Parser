@@ -43,7 +43,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"url\": \"https://en.wikipedia.org/wiki/IAS_machine\",\r\n  \"typeId\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ссылки\",\r\n  \"parserTaskWebsiteTagsOptions\": {\r\n    \"parserTaskWebsiteTags\": [\r\n        {\r\n            \"findOptions\": {\r\n                \"name\": \"a\"\r\n            }\r\n        }\r\n    ]\r\n  },\r\n  \"parserTaskUrlOptions\": {\r\n      \"requestMethod\": \"GET\"\r\n  }\r\n}",
+					"raw": "{\r\n  \"url\": \"https://en.wikipedia.org/wiki/IAS_machine\",\r\n  \"typeId\": 3, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ссылки\",\r\n  \"parserTaskWebsiteTagsOptions\": {\r\n    \"parserTaskWebsiteTags\": [\r\n        {\r\n            \"findOptions\": {\r\n                \"name\": \"div\",\r\n                 \"attributes\": [\r\n            {\r\n              \"name\": \"class\",\r\n              \"value\": \"action-swiper-slide swiper-slide swiper-lazy slide swiper-slide-active\"\r\n            }\r\n          ]\r\n            }\r\n        }\r\n    ]\r\n  },\r\n  \"parserTaskUrlOptions\": {\r\n      \"requestMethod\": \"GET\"\r\n  }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
