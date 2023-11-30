@@ -90,17 +90,25 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 				.ToListAsync(CancellationToken.None);
 
 			var parserTags = await dbContext.FindOptions
-			.Join(dbContext.ParserTaskWebsiteTag,
-				fo => fo.Id,
-				ptwt => ptwt.FindOptionsId,
-				(fo, ptwt) => new { FindOption = fo, ParserTaskWebsiteTag = ptwt })
-			.Join(dbContext.ParserTasks,
-				combined => combined.ParserTaskWebsiteTag.ParserTaskWebsiteTagsOptionsId,
-				pt => pt.ParserTaskWebsiteTagsOptionsId,
-				(combined, pt) => new { combined.FindOption, ParserTask = pt })
-			.Where(combined => combined.ParserTask.Id == parserTaskInAction.Id)
-			.Select(combined => combined.FindOption.Name)
-			.ToListAsync(CancellationToken.None);
+				.Join(dbContext.ParserTaskWebsiteTag,
+					fo => fo.Id,
+					ptwt => ptwt.FindOptionsId,
+					(fo, ptwt) => new { FindOption = fo, ParserTaskWebsiteTag = ptwt })
+				.Join(dbContext.ParserTasks,
+					combined => combined.ParserTaskWebsiteTag.ParserTaskWebsiteTagsOptionsId,
+					pt => pt.ParserTaskWebsiteTagsOptionsId,
+					(combined, pt) => new { combined.FindOption, ParserTask = pt })
+				.Where(combined => combined.ParserTask.Id == parserTaskInAction.Id)
+				.Join(dbContext.TagAttribute,
+					tag => tag.FindOption.Id,
+					tg => tg.FindOptionsId,
+					(tag, tg) => new { tag.FindOption, TagAttribute = tg })
+				.Select(combined => new
+				{
+					combined.FindOption.Name,
+					attr = combined.TagAttribute.Name,
+					combined.TagAttribute.Value,
+				}).ToListAsync(CancellationToken.None);
 
 			var needToHandleUrls = allUrls.Except(handledUrls);
 			foreach (var url in needToHandleUrls)
@@ -126,17 +134,25 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 				string content = "";
 				foreach (var tag in parserTags)
 				{
-					HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes($"//{tag}");
+					HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes($"//{tag.Name}");
 					if (nodes != null)
 					{
 						foreach (HtmlNode node in nodes)
 						{
-							string innerText = node.InnerText;
-							content += innerText + "\n";
+							if (node.Attributes.Contains(tag.attr))
+							{
+								// Если атрибут класса уже существует, добавляем новый класс
+								if (node.Attributes[tag.attr].Value == tag.Value)
+								{
+									string innerText = node.InnerText;
+									content += innerText + "\n";
+								}
+							}
+							
 						}
 					}
 				}
-					
+
 				if (!response.IsSuccessStatusCode)
 				{
 					rabbitMqService.SendParserTaskCollectMessage(new()
