@@ -1,6 +1,7 @@
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
+import {VDataTable} from "vuetify/labs/VDataTable";
 
 export const vuetify = createVuetify({
   theme: {
@@ -13,4 +14,7 @@ export const vuetify = createVuetify({
       },
     },
   },
+  components: [
+    VDataTable
+  ]
 })
