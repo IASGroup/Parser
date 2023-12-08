@@ -130,6 +130,8 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 				HtmlDocument doc = new HtmlDocument();
 				doc.LoadHtml(responseContent);
 
+				//List<string> innerTextResults = new List<string>();
+
 				string content = "";
 				foreach (var tag in parserTags)
 				{
