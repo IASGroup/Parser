@@ -72,6 +72,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
+				Type = ParserTaskCollectMessageTypes.StatusChanged,
 				ParserTaskStatusChangedMessage = new()
 				{
 					NewTaskStatus = (int) ParserTaskStatuses.InProgress
@@ -110,7 +111,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 					combined.TagAttribute.Value,
 				}).ToListAsync(CancellationToken.None);
 
-			var needToHandleUrls = allUrls.Except(handledUrls);
+			var needToHandleUrls = allUrls.Except(handledUrls).ToList();
 			foreach (var url in needToHandleUrls)
 			{
 				if (cancellationToken.IsCancellationRequested)
@@ -129,8 +130,6 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 				HtmlDocument doc = new HtmlDocument();
 				doc.LoadHtml(responseContent);
 
-				//List<string> innerTextResults = new List<string>();
-
 				string content = "";
 				foreach (var tag in parserTags)
 				{
@@ -144,7 +143,9 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 								// Если атрибут класса уже существует, добавляем новый класс
 								if (node.Attributes[tag.attr].Value == tag.Value)
 								{
-									string innerText = node.InnerText;
+									string innerText = node.InnerHtml;
+									string pattern = "<.*?>";
+									innerText = Regex.Replace(innerText, pattern, "");
 									content += innerText + "\n";
 								}
 							}
@@ -158,6 +159,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 					rabbitMqService.SendParserTaskCollectMessage(new()
 					{
 						ParserTaskId = parserTaskInAction.Id,
+						Type = ParserTaskCollectMessageTypes.StatusChanged,
 						ParserTaskErrorMessage = new ParserTaskErrorMessage
 						{
 							ErrorMessage = JsonSerializer.Serialize(new
@@ -166,6 +168,10 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 								Content = content
 							}),
 							Url = url
+						},
+						ParserTaskStatusChangedMessage = new ParserTaskStatusChangedMessage()
+						{
+							NewTaskStatus = (int) ParserTaskPartialResultStatuses.Error
 						}
 					});
 					dbContext.ParserTaskPartialResults.Add(new ParserTaskPartialResult()
@@ -187,6 +193,19 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 				};
 				dbContext.ParserTaskPartialResults.Add(newResult);
 				await dbContext.SaveChangesAsync(cancellationToken);
+				rabbitMqService.SendParserTaskCollectMessage(new()
+				{
+					ParserTaskId = parserTaskInAction.Id,
+					Type = ParserTaskCollectMessageTypes.Progress,
+					ParserTaskProgressMessage = new ParserTaskProgressMessage()
+					{
+						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+						CompletedPartUrl = url,
+						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
+							? null
+							: needToHandleUrls[needToHandleUrls.IndexOf(url) + 1]
+					}
+				});
 			}
 			await dbContext.ParserTasks
 				.Where(x => x.Id == parserTaskInAction.Id)
@@ -197,6 +216,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
+				Type = ParserTaskCollectMessageTypes.StatusChanged,
 				ParserTaskStatusChangedMessage = new()
 				{
 					NewTaskStatus = (int) ParserTaskStatuses.Finished
@@ -218,6 +238,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
+				Type = ParserTaskCollectMessageTypes.StatusChanged,
 				ParserTaskStatusChangedMessage = new()
 				{
 					NewTaskStatus = (int) ParserTaskStatuses.Error
@@ -251,6 +272,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 		rabbitMqService.SendParserTaskCollectMessage(new()
 		{
 			ParserTaskId = parserTaskInAction.Id,
+			Type = ParserTaskCollectMessageTypes.StatusChanged,
 			ParserTaskStatusChangedMessage = new()
 			{
 				NewTaskStatus = (int) ParserTaskStatuses.Paused
