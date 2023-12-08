@@ -18,6 +18,11 @@ public class AppDbContext : DbContext
 	public DbSet<ParserTaskPartialResult> ParserTaskPartialResults { get; set; }
 	public DbSet<ParserTaskStatuses> ParserTaskStatuses { get; set; }
 	public DbSet<ParserTask> ParserTasks { get; set; }
+	public DbSet<ParserTaskWebsiteTag> ParserTaskWebsiteTag { get; set; }
+	public DbSet<FindOptions> FindOptions { get; set; }
+
+	public DbSet<TagAttribute> TagAttribute { get; set; }
+
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
