@@ -7,10 +7,13 @@ import {
   parserTasksHubMessages,
   parserTasksHubUrl,
   RunTaskAsync,
-  StopTaskAsync
+  StopTaskAsync,
+  DownloadPartialTaskResult,
+  DownloadTaskResults
 } from "@/shared/api";
 import {HubConnectionBuilder} from "@microsoft/signalr";
 import {VDataTable} from "vuetify/labs/components";
+import {router} from "@/app/providers";
 
 const {id} = defineProps<{ id: string }>();
 
@@ -39,11 +42,12 @@ onMounted(async () => {
       task.statusId = message.parserTaskStatusChangedMessage.newTaskStatus;
     } else if (message.type === ParserTaskCollectMessageTypes.Progress) {
       nexPartUrl.value = message.parserTaskProgressMessage.nextPartUrl;
+      task!.completedPartsNumber = message.parserTaskProgressMessage.completedPartsNumber;
       taskResults.value.push({
         url: message.parserTaskProgressMessage.completedPartUrl,
-        id: '',
-        parserTaskId: '',
-        statusId: 1
+        id: message.parserTaskProgressMessage.completedPartId,
+        parserTaskId: message.parserTaskId,
+        statusId: message.parserTaskProgressMessage.completedPartStatusId
       })
     }
   })
@@ -100,6 +104,34 @@ function openResultDetails(item: TaskDetailsResultModel) {
   currentTaskResult.value = item;
   isTaskResultDetailsOpened.value = true;
 }
+
+async function downloadTaskResult(item: TaskDetailsResultModel) {
+  const response = await DownloadPartialTaskResult(item.parserTaskId, item.id);
+  if (response.isSuccess) {
+    const link = document.createElement("a");
+    document.body.appendChild(link);
+    const url = URL.createObjectURL(response.result!);
+    link.href = url;
+    link.download = 'partResult.txt';
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function downloadTaskResults(taskId: string) {
+  const response = await DownloadTaskResults(taskId);
+  if (response.isSuccess) {
+    const link = document.createElement("a");
+    document.body.appendChild(link);
+    const url = URL.createObjectURL(response.result!);
+    link.href = url;
+    link.download = 'results.txt';
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+}
 </script>
 
 <template>
@@ -125,10 +157,11 @@ function openResultDetails(item: TaskDetailsResultModel) {
       </v-row>
     </v-card>
   </v-dialog>
-  <v-progress-linear v-if="isTaskResultsLoading" :indeterminate="true"/>
+  <v-btn color="primary" @click="router.push(`/`)">Назад</v-btn>
+  <v-progress-linear v-if="isTaskResultsLoading" :indeterminate="true" />
   <v-row class="ma-0" v-else-if="isTaskLoaded">
     <v-col>
-      <v-card class="d-flex justify-center pa-2">
+      <v-card :flat="true" class="d-flex justify-center pa-2 text-h6">
         {{ task.name }}
       </v-card>
     </v-col>
@@ -142,8 +175,20 @@ function openResultDetails(item: TaskDetailsResultModel) {
         <v-icon size="27">mdi-stop</v-icon>
       </v-btn>
     </div>
+    <div class="d-flex flex-row justify-end w-100 mt-5 mb-5">
+      <v-slider
+        :disabled="task.statusId !== TaskStatuses.InProgress" :readonly="true" :hide-details="true"
+        thumb-label="always" thumb-size="11" color="primary"
+        :max="task.allPartsNumber"
+        :model-value="task.completedPartsNumber"
+      >
+        <template v-slot:append>
+          {{ task.allPartsNumber }}
+        </template>
+      </v-slider>
+    </div>
     <div>
-      <v-btn width="128" color="primary">Загрузить</v-btn>
+      <v-btn width="128" color="primary" @click="downloadTaskResults(task.id)">Загрузить</v-btn>
     </div>
   </v-row>
   <v-row class="ma-0" v-if="isTaskResultsLoaded === true">
@@ -169,15 +214,15 @@ function openResultDetails(item: TaskDetailsResultModel) {
           </template>
           <template v-slot:item.actions="{ item }">
             <v-icon
-              size="small"
-              class="me-2"
               @click="openResultDetails(item)"
+              color="primary"
+              class="mr-4"
             >
               mdi-menu-open
             </v-icon>
             <v-icon
-              size="small"
-              @click="deleteItem(item)"
+              @click="downloadTaskResult(item)"
+              color="primary"
             >
               mdi-download-outline
             </v-icon>

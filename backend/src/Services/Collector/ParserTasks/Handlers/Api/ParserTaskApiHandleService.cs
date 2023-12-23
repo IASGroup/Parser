@@ -124,14 +124,30 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 							NewTaskStatus = (int) ParserTaskPartialResultStatuses.Error
 						}
 					});
-					dbContext.ParserTaskPartialResults.Add(new ParserTaskPartialResult()
+					var failureResult = new ParserTaskPartialResult()
 					{
 						StatusId = (int) ParserTaskPartialResultStatuses.Error,
 						Url = url,
 						Content = responseContent,
 						ParserTaskId = parserTaskInAction.Id
-					});
+					};
+					dbContext.ParserTaskPartialResults.Add(failureResult);
 					await dbContext.SaveChangesAsync(cancellationToken);
+					rabbitMqService.SendParserTaskCollectMessage(new()
+					{
+						ParserTaskId = parserTaskInAction.Id,
+						Type = ParserTaskCollectMessageTypes.Progress,
+						ParserTaskProgressMessage = new ParserTaskProgressMessage()
+						{
+							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+							CompletedPartUrl = url,
+							NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
+								? null
+								: needToHandleUrls[needToHandleUrls.IndexOf(url) + 1],
+							CompletedPartId = failureResult.Id,
+							CompletedPartStatusId = failureResult.StatusId
+						}
+					});
 					return;
 				}
 
@@ -154,7 +170,9 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 						CompletedPartUrl = url,
 						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 							? null
-							: needToHandleUrls[needToHandleUrls.IndexOf(url) + 1]
+							: needToHandleUrls[needToHandleUrls.IndexOf(url) + 1],
+						CompletedPartId = newResult.Id,
+						CompletedPartStatusId = newResult.StatusId
 					}
 				});
 			}

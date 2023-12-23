@@ -29,7 +29,9 @@ export type TaskDetailsModel = {
   name: string,
   typeId: TaskTypes,
   statusId: TaskStatuses,
-  inProgressUrl: string
+  inProgressUrl: string,
+  allPartsNumber: number,
+  completedPartsNumber: number
 }
 
 export type TaskDetailsResultModel = {

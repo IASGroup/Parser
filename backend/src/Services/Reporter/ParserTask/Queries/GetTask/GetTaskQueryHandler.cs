@@ -58,6 +58,12 @@ public class GetTaskQueryHandler : IRequestHandler<GetTaskQuery, Result<ParserTa
 					.ToListAsync(cancellationToken);
 				inProgressUrl = allUrls.Except(handledUrls).First();
 			}
+			
+			var allPartsNumber = _parserTaskUtilService.GetParserTaskUrls(task).Count();
+			var completedPartsNumber = await _context.ParserTaskPartialResults
+				.Where(x => x.ParserTaskId == task.Id)
+				.CountAsync(cancellationToken);
+			
 			return Result<ParserTaskDto>.Success(new ParserTaskDto
 			{
 				Id = task.Id,
@@ -65,7 +71,9 @@ public class GetTaskQueryHandler : IRequestHandler<GetTaskQuery, Result<ParserTa
 				Url = task.Url,
 				Name = task.Name,
 				TypeId = task.TypeId,
-				InProgressUrl = inProgressUrl
+				InProgressUrl = inProgressUrl,
+				AllPartsNumber = allPartsNumber,
+				CompletedPartsNumber = completedPartsNumber
 			});
 		}
 		catch (Exception e)

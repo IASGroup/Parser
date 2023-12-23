@@ -21,6 +21,8 @@ export type ParserTaskCollectMessage = {
   parserTaskProgressMessage: {
     completedPartUrl: string,
     nextPartUrl: string | null,
-    completedPartsNumber: number
+    completedPartsNumber: number,
+    completedPartId: string,
+    completedPartStatusId: number
   }
 }

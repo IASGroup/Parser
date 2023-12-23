@@ -50,7 +50,7 @@ public class ParserTaskController : ControllerBase
 	}
 
 	[HttpGet("{taskId:guid}")]
-	public async Task<ActionResult<IEnumerable<ParserTaskResult>>> GetTaskAsync([FromRoute] Guid taskId)
+	public async Task<ActionResult<IEnumerable<ParserTaskDto>>> GetTaskAsync([FromRoute] Guid taskId)
 	{
 		var query = new GetTaskQuery { ParserTaskId = taskId };
 		var result = await _mediator.Send(query);
