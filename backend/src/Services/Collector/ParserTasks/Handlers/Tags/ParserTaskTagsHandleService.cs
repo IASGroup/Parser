@@ -150,7 +150,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 									content += innerText + "\n";
 								}
 							}
-							
+
 						}
 					}
 				}
@@ -299,5 +299,3 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 		});
 	}
 }
-
-
