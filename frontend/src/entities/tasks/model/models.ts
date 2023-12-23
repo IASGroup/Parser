@@ -22,3 +22,21 @@ export type TaskListModel = {
   completedPartsNumber: number,
   allPartsNumber: number
 }
+
+export type TaskDetailsModel = {
+  id: string,
+  url: string,
+  name: string,
+  typeId: TaskTypes,
+  statusId: TaskStatuses,
+  inProgressUrl: string,
+  allPartsNumber: number,
+  completedPartsNumber: number
+}
+
+export type TaskDetailsResultModel = {
+  id: string,
+  parserTaskId: string,
+  url: string,
+  statusId: number
+}

@@ -8,4 +8,6 @@ public class ParserTaskDto
 	public int TypeId { get; set; }
 	public int StatusId { get; set; }
 	public string? InProgressUrl { get; set; }
+	public int AllPartsNumber { get; set; }
+	public int CompletedPartsNumber { get; set; }
 }

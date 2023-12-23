@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {TaskListModel, TaskStatuses} from "@/entities/tasks";
-import { RunTaskAsync, StopTaskAsync } from "@/shared/api";
+import {RunTaskAsync, StopTaskAsync} from "@/shared/api";
 import {computed} from "vue";
+import {router} from "@/app/providers";
 
 const {task} = defineProps<{ task: TaskListModel }>();
 
@@ -41,14 +42,14 @@ const chipModel = computed(() => {
 
 async function runTask(taskId: string): Promise<void> {
   const response = await RunTaskAsync(taskId);
-  if (!response.isSuccess || !response.result){
+  if (!response.isSuccess || !response.result) {
     console.log(response);
   }
 }
 
 async function stopTask(taskId: string): Promise<void> {
   const response = await StopTaskAsync(taskId);
-  if (!response.isSuccess || !response.result){
+  if (!response.isSuccess || !response.result) {
     console.log(response);
   }
 }
@@ -64,10 +65,11 @@ async function stopTask(taskId: string): Promise<void> {
       <v-col class="d-flex flex-column align-center">
         <span>{{ task.name }}</span>
         <div class="d-flex flex-row justify-end w-100 mt-5">
-          <v-slider :disabled="task.statusId !== TaskStatuses.InProgress" :readonly="true" :hide-details="true" thumb-label="always" thumb-size="11"
-            color="primary"
-            :max="task.allPartsNumber"
-            :model-value="task.completedPartsNumber"
+          <v-slider :disabled="task.statusId !== TaskStatuses.InProgress" :readonly="true" :hide-details="true"
+                    thumb-label="always" thumb-size="11"
+                    color="primary"
+                    :max="task.allPartsNumber"
+                    :model-value="task.completedPartsNumber"
           >
             <template v-slot:append>
               {{ task.allPartsNumber }}
@@ -77,15 +79,18 @@ async function stopTask(taskId: string): Promise<void> {
       </v-col>
       <div class="d-flex justify-center">
         <v-col>
-          <v-btn @click="task.statusId === TaskStatuses.InProgress ? stopTask(task.id) : runTask(task.id)" :disabled="task.statusId === TaskStatuses.Finished" icon>
-            <v-icon v-if="!(task.statusId === TaskStatuses.InProgress)" size="30" color="green">mdi-play-circle-outline</v-icon>
+          <v-btn @click="task.statusId === TaskStatuses.InProgress ? stopTask(task.id) : runTask(task.id)"
+                 :disabled="task.statusId === TaskStatuses.Finished" icon>
+            <v-icon v-if="!(task.statusId === TaskStatuses.InProgress)" size="30" color="green">
+              mdi-play-circle-outline
+            </v-icon>
             <v-progress-circular v-else color="red" width="2" indeterminate>
               <v-icon color="red">mdi-stop</v-icon>
             </v-progress-circular>
           </v-btn>
         </v-col>
         <v-col class="d-flex flex-column mr-1">
-          <v-btn icon>
+          <v-btn @click="router.push(`tasks/${task.id}`)" icon>
             <v-icon size="30" color="orange">mdi-menu-open</v-icon>
           </v-btn>
           <v-badge v-if="task.hasError" content="С ошибками" location="bottom" offset-y="-17" color="red-darken-1"/>
