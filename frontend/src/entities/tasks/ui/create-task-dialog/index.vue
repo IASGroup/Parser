@@ -114,6 +114,8 @@ const currentAddedAttribute = ref<{
   error: null
 })
 
+const loadingCreateTask = ref<boolean>(false);
+
 function addTagAttribute() {
   if (!currentAddedAttribute.value.name || !currentAddedAttribute.value.value) {
     currentAddedAttribute.value.error = "Значение не может быть пустым";
@@ -293,6 +295,7 @@ function removeHeader(index: number) {
 }
 
 async function createParserTask() : Promise<void> {
+  loadingCreateTask.value = true;
   const createTask : CreateTaskRequest = {
     name: taskName.value as string,
     url: taskUrl.value as string,
@@ -333,6 +336,7 @@ async function createParserTask() : Promise<void> {
   if (!response.isSuccess) {
     console.log(response);
   }
+  loadingCreateTask.value = false;
   tasks.value.push({
     name: response.result?.name as string,
     statusId: response.result?.statusId as number,
@@ -499,7 +503,7 @@ async function createParserTask() : Promise<void> {
       </v-container>
       <v-spacer/>
       <v-card-actions class="pa-0 ma-0">
-        <v-btn @click="createParserTask" :block="true" color="primary" variant="flat">Создать</v-btn>
+        <v-btn @click="createParserTask" :disabled="loadingCreateTask" :loading="loadingCreateTask" :block="true" color="primary" variant="flat">Создать</v-btn>
       </v-card-actions>
     </v-card>
   </v-container>
