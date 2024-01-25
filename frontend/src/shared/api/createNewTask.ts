@@ -54,7 +54,10 @@ export type CreateTaskRequest = {
       name: string,
       value: string
     }> | null
-  }
+  },
+  parserTaskTorOptions: {
+    changeIpAddressAfterRequestsNumber: number
+  } | null
 }
 
 export enum TaskStatuses {
