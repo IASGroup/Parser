@@ -43,7 +43,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"url\": \"https://en.wikipedia.org/wiki/IAS_machine\",\r\n  \"typeId\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ссылки\",\r\n  \"parserTaskWebsiteTagsOptions\": {\r\n    \"parserTaskWebsiteTags\": [\r\n        {\r\n            \"findOptions\": {\r\n                \"name\": \"a\"\r\n            }\r\n        }\r\n    ]\r\n  },\r\n  \"parserTaskUrlOptions\": {\r\n      \"requestMethod\": \"GET\"\r\n  }\r\n}",
+					"raw": "{\r\n  \"url\": \"https://www.tu-bryansk.ru/index.php\",\r\n  \"typeId\": 3, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ссылки\",\r\n  \"parserTaskWebsiteTagsOptions\": {\r\n    \"parserTaskWebsiteTags\": [\r\n        {\r\n            \"findOptions\": {\r\n                \"name\": \"a\"\r\n            }\r\n        }\r\n    ]\r\n  },\r\n  \"parserTaskUrlOptions\": {\r\n      \"requestMethod\": \"GET\"\r\n  }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -51,7 +51,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5140/api/parser-tasks",
+					"raw": "http://localhost:5140/api/manage/parser-tasks",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -59,6 +59,7 @@
 					"port": "5140",
 					"path": [
 						"api",
+						"manage",
 						"parser-tasks"
 					]
 				}
@@ -72,7 +73,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"url\": \"https://ru.wikipedia.org/wiki/%D0%9B%D0%93%D0%91%D0%A2\",\r\n  \"typeId\": 2, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ЛГБТ\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\"\r\n  }\r\n}",
+					"raw": "{\r\n  \"url\": \"https://ru.wikipedia.org/wiki/%D0%9B%D0%93%D0%91%D0%A2\",\r\n  \"typeId\": 2, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ЛГБТ\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\"\r\n  },\r\n  \"parserTaskTorOptions\": {\r\n    \"changeIpAddressAfterRequestsNumber\": 5\r\n  }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -101,7 +102,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/manage/parser-tasks/e41b71a1-6866-493e-a191-8dbddeeccf69/run",
+					"raw": "http://localhost:5140/api/manage/parser-tasks/d3d50757-25c4-4dda-ad1c-fc74b6aa2444/run",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -111,7 +112,7 @@
 						"api",
 						"manage",
 						"parser-tasks",
-						"e41b71a1-6866-493e-a191-8dbddeeccf69",
+						"d3d50757-25c4-4dda-ad1c-fc74b6aa2444",
 						"run"
 					]
 				}
@@ -124,7 +125,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/manage/parser-tasks/c2191887-289b-4068-a615-15cba2f06b61/stop",
+					"raw": "http://localhost:5140/api/manage/parser-tasks/e380a8ec-4336-4b74-852d-8d4ae5457a89/stop",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -134,7 +135,7 @@
 						"api",
 						"manage",
 						"parser-tasks",
-						"c2191887-289b-4068-a615-15cba2f06b61",
+						"e380a8ec-4336-4b74-852d-8d4ae5457a89",
 						"stop"
 					]
 				}
