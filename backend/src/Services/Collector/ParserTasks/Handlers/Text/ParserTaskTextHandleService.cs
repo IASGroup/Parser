@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Share.Contracts;
 using Share.Tables;
 using System.Text.RegularExpressions;
+using Collector.Tor;
 using ParserTask = Share.RabbitMessages.ParserTaskAction.ParserTask;
 using ParserTaskStatuses = Share.Contracts.ParserTaskStatuses;
 using HtmlAgilityPack;
@@ -38,8 +39,9 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 		using var taskScope = _serviceProvider.CreateScope();
 		var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
 		var rabbitMqService = taskScope.ServiceProvider.GetService<IRabbitMqService>();
+		var torIntegrationService = taskScope.ServiceProvider.GetService<ITorIntegrationService>();
 
-		if (dbContext is null || rabbitMqService is null)
+		if (dbContext is null || rabbitMqService is null || torIntegrationService is null)
 		{
 			_logger.LogError(
 				message: "Необходимый сервис не найден"
@@ -89,21 +91,46 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 				.Select(x => x.Url!)
 				.ToListAsync(CancellationToken.None);
 			var needToHandleUrls = allUrls.Except(handledUrls).ToList();
-			foreach (var url in needToHandleUrls)
+			for (var index = 0; index < needToHandleUrls.Count; index++)
 			{
+				var url = needToHandleUrls[index];
 				if (cancellationToken.IsCancellationRequested)
 				{
 					await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
 					return;
 				}
-				var request = new HttpRequestMessage
+
+				string? responseContent;
+				bool responseIsSuccess;
+
+				if (parserTaskInAction.ParserTaskTorOptions is not null)
 				{
-					Method = _parserTaskUtilService.GetHttpMethodByName(parserTaskInAction.ParserTaskUrlOptions!.RequestMethod),
-					RequestUri = new Uri(url)
-				};
-				var response = await _httpClient.SendAsync(request, cancellationToken);
-				var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-				if (!response.IsSuccessStatusCode)
+					if ((index + 1) % parserTaskInAction.ParserTaskTorOptions.ChangeIpAddressAfterRequestsNumber == 0)
+					{
+						await torIntegrationService.ChangeIpAsync();
+					}
+					responseContent = await torIntegrationService.DownloadAsync(new TorDownloadRequestDto()
+					{
+						Url = url,
+						MethodName = parserTaskInAction.ParserTaskUrlOptions!.RequestMethod
+					});
+					responseIsSuccess = responseContent is not null;
+				}
+				else
+				{
+					var request = new HttpRequestMessage
+					{
+						Method = _parserTaskUtilService.GetHttpMethodByName(parserTaskInAction.ParserTaskUrlOptions!.RequestMethod),
+						RequestUri = new Uri(url)
+					};
+					var response = await _httpClient.SendAsync(request, cancellationToken);
+					responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+					responseIsSuccess = response.IsSuccessStatusCode;
+				}
+
+				responseContent ??= "";
+
+				if (!responseIsSuccess)
 				{
 					rabbitMqService.SendParserTaskCollectMessage(new()
 					{
@@ -113,7 +140,6 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 						{
 							ErrorMessage = JsonSerializer.Serialize(new
 							{
-								response.StatusCode,
 								Content = responseContent
 							}),
 							Url = url
@@ -138,7 +164,8 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 						Type = ParserTaskCollectMessageTypes.Progress,
 						ParserTaskProgressMessage = new ParserTaskProgressMessage()
 						{
-							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
+												   (needToHandleUrls.IndexOf(url) + 1),
 							CompletedPartUrl = url,
 							NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 								? null
@@ -151,7 +178,8 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 				}
 
 				string[] classesToRemove = { "ad", "advertisement", "promo" }; // Здесь список классов рекламы
-				string[] tagsToRemove = { "script", "iframe", "img", "head", "footer", "nav", "a", "table" }; //список тегов для удаления
+				string[] tagsToRemove =
+					{"script", "iframe", "img", "head", "footer", "nav", "a", "table"}; //список тегов для удаления
 				HtmlDocument doc = new HtmlDocument();
 				doc.LoadHtml(responseContent);
 				//Полностью удаляем мусорные теги
@@ -166,6 +194,7 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 						}
 					}
 				}
+
 				//Удаляем теги по классам
 				RemoveElementsByClass(doc.DocumentNode, classesToRemove);
 				responseContent = doc.DocumentNode.OuterHtml;
@@ -187,7 +216,8 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 					Type = ParserTaskCollectMessageTypes.Progress,
 					ParserTaskProgressMessage = new ParserTaskProgressMessage()
 					{
-						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
+											   (needToHandleUrls.IndexOf(url) + 1),
 						CompletedPartUrl = url,
 						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 							? null
@@ -197,6 +227,7 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 					}
 				});
 			}
+
 			await dbContext.ParserTasks
 				.Where(x => x.Id == parserTaskInAction.Id)
 				.ExecuteUpdateAsync(x => x.SetProperty(

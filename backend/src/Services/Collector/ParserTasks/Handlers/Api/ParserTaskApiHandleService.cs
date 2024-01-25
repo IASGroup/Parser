@@ -3,6 +3,7 @@ using Collector.Contexts;
 using Collector.Contracts;
 using Collector.ParserTasks.Share;
 using Collector.RabbitMq;
+using Collector.Tor;
 using Microsoft.EntityFrameworkCore;
 using Share.Contracts;
 using Share.Tables;
@@ -36,8 +37,9 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 		using var taskScope = _serviceProvider.CreateScope();
 		var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
 		var rabbitMqService = taskScope.ServiceProvider.GetService<IRabbitMqService>();
+		var torIntegrationService = taskScope.ServiceProvider.GetService<ITorIntegrationService>();
 
-		if (dbContext is null || rabbitMqService is null)
+		if (dbContext is null || rabbitMqService is null || torIntegrationService is null)
 		{
 			_logger.LogError(
 				message: "Необходимый сервис не найден"
@@ -88,23 +90,45 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 				.Select(x => x.Url!)
 				.ToListAsync(CancellationToken.None);
 			var needToHandleUrls = allUrls.Except(handledUrls).ToList();
-			foreach (var url in needToHandleUrls)
+			for (var index = 0; index < needToHandleUrls.Count; index++)
 			{
+				var url = needToHandleUrls[index];
 				if (cancellationToken.IsCancellationRequested)
 				{
 					await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
 					return;
 				}
 
-				var request = new HttpRequestMessage
+				string? responseContent;
+				bool responseIsSuccess;
+				if (parserTaskInAction.ParserTaskTorOptions is not null)
 				{
-					Method = _parserTaskUtilService.GetHttpMethodByName(parserTaskInAction.ParserTaskUrlOptions!
-						.RequestMethod),
-					RequestUri = new Uri(url)
-				};
-				var response = await _httpClient.SendAsync(request, cancellationToken);
-				var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-				if (!response.IsSuccessStatusCode)
+					if ((index + 1) % parserTaskInAction.ParserTaskTorOptions.ChangeIpAddressAfterRequestsNumber == 0)
+					{
+						await torIntegrationService.ChangeIpAsync();
+					}
+					responseContent = await torIntegrationService.DownloadAsync(new TorDownloadRequestDto()
+					{
+						Url = url,
+						MethodName = parserTaskInAction.ParserTaskUrlOptions!.RequestMethod
+					});
+					responseIsSuccess = responseContent is not null;
+				}
+				else
+				{
+					var request = new HttpRequestMessage
+					{
+						Method = _parserTaskUtilService.GetHttpMethodByName(parserTaskInAction.ParserTaskUrlOptions!.RequestMethod),
+						RequestUri = new Uri(url)
+					};
+					var response = await _httpClient.SendAsync(request, cancellationToken);
+					responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+					responseIsSuccess = response.IsSuccessStatusCode;
+				}
+
+				responseContent ??= "";
+
+				if (!responseIsSuccess)
 				{
 					rabbitMqService.SendParserTaskCollectMessage(new()
 					{
@@ -114,7 +138,6 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 						{
 							ErrorMessage = JsonSerializer.Serialize(new
 							{
-								response.StatusCode,
 								Content = responseContent
 							}),
 							Url = url
@@ -139,7 +162,8 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 						Type = ParserTaskCollectMessageTypes.Progress,
 						ParserTaskProgressMessage = new ParserTaskProgressMessage()
 						{
-							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
+												   (needToHandleUrls.IndexOf(url) + 1),
 							CompletedPartUrl = url,
 							NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 								? null
@@ -166,7 +190,8 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 					Type = ParserTaskCollectMessageTypes.Progress,
 					ParserTaskProgressMessage = new ParserTaskProgressMessage()
 					{
-						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
+											   (needToHandleUrls.IndexOf(url) + 1),
 						CompletedPartUrl = url,
 						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 							? null

@@ -3,3 +3,4 @@ start powershell -noexit -command "$Host.UI.RawUI.WindowTitle = 'Collector';dotn
 start powershell -noexit -command "$Host.UI.RawUI.WindowTitle = 'Hubs';dotnet run --project './Hubs/Hubs.csproj'"
 start powershell -noexit -command "$Host.UI.RawUI.WindowTitle = 'Gateway';dotnet run --project './Gateway/Gateway.csproj'"
 start powershell -noexit -command "$Host.UI.RawUI.WindowTitle = 'Reporter';dotnet run --project './Reporter/Reporter.csproj'"
+start powershell -noexit -command "$Host.UI.RawUI.WindowTitle = 'Unlocker';dotnet run --project './Unlocker/Unlocker.csproj'"

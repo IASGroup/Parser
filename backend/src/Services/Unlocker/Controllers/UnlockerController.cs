@@ -43,7 +43,7 @@ namespace Unlocker.Controllers
 				var config = _torConfigService.GetConfig();
 				var request = new HttpRequestMessage()
 				{
-					RequestUri = new Uri(requestDto.BaseUrl),
+					RequestUri = new Uri(requestDto.Url),
 					Method = requestDto.MethodName.ToUpper() switch
 					{
 						"GET" => HttpMethod.Get,

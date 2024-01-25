@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "d9a01d7d-b743-4513-b2ec-2bfb46777467",
+		"_postman_id": "c8b248db-0af4-40cf-9f28-799eb109a01a",
 		"name": "ParserApi",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "18129580"
@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"url\": \"https://jsonplaceholder.typicode.com/todos/{todo}\",\r\n  \"typeId\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить фейк апи\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\",\r\n    \"paths\": [\r\n        {\r\n            \"name\": \"todo\",\r\n            \"valueOptions\": {\r\n                \"range\": {\r\n                    \"start\": 1,\r\n                    \"end\": 100\r\n                }\r\n            }\r\n        }\r\n    ]\r\n  }\r\n}",
+					"raw": "{\r\n  \"url\": \"https://jsonplaceholder.typicode.com/todos/{todo}\",\r\n  \"typeId\": 1, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить фейк апи\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\",\r\n    \"paths\": [\r\n        {\r\n            \"name\": \"todo\",\r\n            \"valueOptions\": {\r\n                \"range\": {\r\n                    \"start\": 1,\r\n                    \"end\": 50\r\n                }\r\n            }\r\n        }\r\n    ]\r\n  },\r\n  \"parserTaskTorOptions\": {\r\n    \"changeIpAddressAfterRequestsNumber\": 5\r\n  }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -43,7 +43,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"url\": \"https://en.wikipedia.org/wiki/IAS_machine\",\r\n  \"typeId\": 3, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ссылки\",\r\n  \"parserTaskWebsiteTagsOptions\": {\r\n    \"parserTaskWebsiteTags\": [\r\n        {\r\n            \"findOptions\": {\r\n                \"name\": \"div\",\r\n                 \"attributes\": [\r\n            {\r\n              \"name\": \"class\",\r\n              \"value\": \"action-swiper-slide swiper-slide swiper-lazy slide swiper-slide-active\"\r\n            }\r\n          ]\r\n            }\r\n        }\r\n    ]\r\n  },\r\n  \"parserTaskUrlOptions\": {\r\n      \"requestMethod\": \"GET\"\r\n  }\r\n}",
+					"raw": "{\r\n  \"url\": \"https://www.tu-bryansk.ru/index.php\",\r\n  \"typeId\": 3, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ссылки\",\r\n  \"parserTaskWebsiteTagsOptions\": {\r\n    \"parserTaskWebsiteTags\": [\r\n        {\r\n            \"findOptions\": {\r\n                \"name\": \"a\"\r\n            }\r\n        }\r\n    ]\r\n  },\r\n  \"parserTaskUrlOptions\": {\r\n      \"requestMethod\": \"GET\"\r\n  }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -51,14 +51,15 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5053/api/parser-tasks",
+					"raw": "http://localhost:5140/api/manage/parser-tasks",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "5053",
+					"port": "5140",
 					"path": [
 						"api",
+						"manage",
 						"parser-tasks"
 					]
 				}
@@ -72,7 +73,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"url\": \"https://wiki.lineageos.org/gapps\",\r\n  \"typeId\": 2, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить фейк апи\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\",\r\n    \"paths\": [\r\n        {\r\n            \"name\": \"todo\",\r\n            \"valueOptions\": {\r\n                \"range\": {\r\n                    \"start\": 1,\r\n                    \"end\": 100\r\n                }\r\n            }\r\n        }\r\n    ]\r\n  }\r\n}",
+					"raw": "{\r\n  \"url\": \"https://ru.wikipedia.org/wiki/%D0%9B%D0%93%D0%91%D0%A2\",\r\n  \"typeId\": 2, // 1 - api, 2 - websiteText, 3 - websiteTags, 4 - selenium\r\n  \"name\": \"Спарсить ЛГБТ\",\r\n  \"parserTaskUrlOptions\": {\r\n    \"requestMethod\": \"GET\"\r\n  },\r\n  \"parserTaskTorOptions\": {\r\n    \"changeIpAddressAfterRequestsNumber\": 5\r\n  }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -101,7 +102,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/manage/parser-tasks/3d1a6e2f-2b33-4960-8b0a-d87eb1969e66/run",
+					"raw": "http://localhost:5140/api/manage/parser-tasks/d3d50757-25c4-4dda-ad1c-fc74b6aa2444/run",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -111,7 +112,7 @@
 						"api",
 						"manage",
 						"parser-tasks",
-						"3d1a6e2f-2b33-4960-8b0a-d87eb1969e66",
+						"d3d50757-25c4-4dda-ad1c-fc74b6aa2444",
 						"run"
 					]
 				}
@@ -124,7 +125,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/manage/parser-tasks/3d1a6e2f-2b33-4960-8b0a-d87eb1969e66/stop",
+					"raw": "http://localhost:5140/api/manage/parser-tasks/e380a8ec-4336-4b74-852d-8d4ae5457a89/stop",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -134,7 +135,7 @@
 						"api",
 						"manage",
 						"parser-tasks",
-						"3d1a6e2f-2b33-4960-8b0a-d87eb1969e66",
+						"e380a8ec-4336-4b74-852d-8d4ae5457a89",
 						"stop"
 					]
 				}
@@ -168,7 +169,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/reports/parser-tasks/3d1a6e2f-2b33-4960-8b0a-d87eb1969e66/results",
+					"raw": "http://localhost:5140/api/reports/parser-tasks/40282b03-1219-4555-a8c9-bd0202d73df5/results",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -178,7 +179,7 @@
 						"api",
 						"reports",
 						"parser-tasks",
-						"3d1a6e2f-2b33-4960-8b0a-d87eb1969e66",
+						"40282b03-1219-4555-a8c9-bd0202d73df5",
 						"results"
 					]
 				}
@@ -226,6 +227,61 @@
 						"reports",
 						"parser-tasks",
 						"3d1a6e2f-2b33-4960-8b0a-d87eb1969e66"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DownloadTaskPartialResult",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5140/api/reports/parser-tasks/40282b03-1219-4555-a8c9-bd0202d73df5/results/611c4c6b-54c0-40c9-8432-979e1a0754f3/download",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"reports",
+						"parser-tasks",
+						"40282b03-1219-4555-a8c9-bd0202d73df5",
+						"results",
+						"611c4c6b-54c0-40c9-8432-979e1a0754f3",
+						"download"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TorSetup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"socksPort\": 9150,\r\n  \"controlPort\": 9150,\r\n  \"controlPassword\": \"\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5140/api/tor/setup",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"tor",
+						"setup"
 					]
 				}
 			},

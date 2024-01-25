@@ -9,6 +9,13 @@ public class ParserTask
 	public int? StatusId { get; set; }
 	public ParserTaskWebsiteTagsOptions? ParserTaskWebsiteTagsOptions { get; set; }
 	public ParserTaskUrlOptions? ParserTaskUrlOptions { get; set; }
+
+	public ParserTaskTorOptions? ParserTaskTorOptions { get; set; }
+}
+
+public class ParserTaskTorOptions
+{
+	public int ChangeIpAddressAfterRequestsNumber { get; set; }
 }
 
 public class ParserTaskWebsiteTagsOptions

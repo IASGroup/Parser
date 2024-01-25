@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Share.Contracts;
 using Share.Tables;
 using System.Text.RegularExpressions;
+using Collector.Tor;
 using ParserTask = Share.RabbitMessages.ParserTaskAction.ParserTask;
 using ParserTaskStatuses = Share.Contracts.ParserTaskStatuses;
 using HtmlAgilityPack;
@@ -39,8 +40,9 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 		using var taskScope = _serviceProvider.CreateScope();
 		var dbContext = taskScope.ServiceProvider.GetService<AppDbContext>();
 		var rabbitMqService = taskScope.ServiceProvider.GetService<IRabbitMqService>();
+		var torIntegrationService = taskScope.ServiceProvider.GetService<ITorIntegrationService>();
 
-		if (dbContext is null || rabbitMqService is null)
+		if (dbContext is null || rabbitMqService is null || torIntegrationService is null)
 		{
 			_logger.LogError(
 				message: "Необходимый сервис не найден"
@@ -90,72 +92,49 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 				.Select(x => x.Url!)
 				.ToListAsync(CancellationToken.None);
 
-			var parserTags = await dbContext.FindOptions
-				.Join(dbContext.ParserTaskWebsiteTag,
-					fo => fo.Id,
-					ptwt => ptwt.FindOptionsId,
-					(fo, ptwt) => new { FindOption = fo, ParserTaskWebsiteTag = ptwt })
-				.Join(dbContext.ParserTasks,
-					combined => combined.ParserTaskWebsiteTag.ParserTaskWebsiteTagsOptionsId,
-					pt => pt.ParserTaskWebsiteTagsOptionsId,
-					(combined, pt) => new { combined.FindOption, ParserTask = pt })
-				.Where(combined => combined.ParserTask.Id == parserTaskInAction.Id)
-				.Join(dbContext.TagAttribute,
-					tag => tag.FindOption.Id,
-					tg => tg.FindOptionsId,
-					(tag, tg) => new { tag.FindOption, TagAttribute = tg })
-				.Select(combined => new
-				{
-					combined.FindOption.Name,
-					attr = combined.TagAttribute.Name,
-					combined.TagAttribute.Value,
-				}).ToListAsync(CancellationToken.None);
+			var parserTags = parserTaskInAction.ParserTaskWebsiteTagsOptions.ParserTaskWebsiteTags;
 
 			var needToHandleUrls = allUrls.Except(handledUrls).ToList();
-			foreach (var url in needToHandleUrls)
+			for (var index = 0; index < needToHandleUrls.Count; index++)
 			{
+				var url = needToHandleUrls[index];
 				if (cancellationToken.IsCancellationRequested)
 				{
 					await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
 					return;
 				}
-				var request = new HttpRequestMessage
+
+				string? responseContent;
+				bool responseIsSuccess;
+
+				if (parserTaskInAction.ParserTaskTorOptions is not null)
 				{
-					Method = _parserTaskUtilService.GetHttpMethodByName(parserTaskInAction.ParserTaskUrlOptions!.RequestMethod),
-					RequestUri = new Uri(url)
-				};
-				var response = await _httpClient.SendAsync(request, cancellationToken);
-				var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-				HtmlDocument doc = new HtmlDocument();
-				doc.LoadHtml(responseContent);
-
-
-				string content = "";
-				foreach (var tag in parserTags)
-				{
-					HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes($"//{tag.Name}");
-					if (nodes != null)
+					if ((index + 1) % parserTaskInAction.ParserTaskTorOptions.ChangeIpAddressAfterRequestsNumber == 0)
 					{
-						foreach (HtmlNode node in nodes)
-						{
-							if (node.Attributes.Contains(tag.attr))
-							{
-								// Если атрибут класса уже существует, добавляем новый класс
-								if (node.Attributes[tag.attr].Value == tag.Value)
-								{
-									string innerText = node.InnerHtml;
-									string pattern = "<.*?>";
-									innerText = Regex.Replace(innerText, pattern, "");
-									content += innerText + "\n";
-								}
-							}
-
-						}
+						await torIntegrationService.ChangeIpAsync();
 					}
+					responseContent = await torIntegrationService.DownloadAsync(new TorDownloadRequestDto()
+					{
+						Url = url,
+						MethodName = parserTaskInAction.ParserTaskUrlOptions!.RequestMethod
+					});
+					responseIsSuccess = responseContent is not null;
+				}
+				else
+				{
+					var request = new HttpRequestMessage
+					{
+						Method = _parserTaskUtilService.GetHttpMethodByName(parserTaskInAction.ParserTaskUrlOptions!.RequestMethod),
+						RequestUri = new Uri(url)
+					};
+					var response = await _httpClient.SendAsync(request, cancellationToken);
+					responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+					responseIsSuccess = response.IsSuccessStatusCode;
 				}
 
-				if (!response.IsSuccessStatusCode)
+				responseContent ??= "";
+
+				if (!responseIsSuccess)
 				{
 					rabbitMqService.SendParserTaskCollectMessage(new()
 					{
@@ -165,8 +144,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 						{
 							ErrorMessage = JsonSerializer.Serialize(new
 							{
-								response.StatusCode,
-								Content = content
+								Content = responseContent
 							}),
 							Url = url
 						},
@@ -179,7 +157,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 					{
 						StatusId = (int) ParserTaskPartialResultStatuses.Error,
 						Url = url,
-						Content = content,
+						Content = responseContent,
 						ParserTaskId = parserTaskInAction.Id
 					};
 					dbContext.ParserTaskPartialResults.Add(failureResult);
@@ -190,7 +168,8 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 						Type = ParserTaskCollectMessageTypes.Progress,
 						ParserTaskProgressMessage = new ParserTaskProgressMessage()
 						{
-							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
+												   (needToHandleUrls.IndexOf(url) + 1),
 							CompletedPartUrl = url,
 							NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 								? null
@@ -201,6 +180,44 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 					});
 					return;
 				}
+
+				HtmlDocument doc = new HtmlDocument();
+				doc.LoadHtml(responseContent);
+
+
+				string content = "";
+				foreach (var tag in parserTags)
+				{
+					HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes($"//{tag.FindOptions.Name}");
+					if (nodes != null)
+					{
+						foreach (HtmlNode node in nodes)
+						{
+							if (!tag.FindOptions.Attributes.Any())
+							{
+								string innerText = node.InnerHtml;
+								string pattern = "<.*?>";
+								innerText = Regex.Replace(innerText, pattern, "");
+								content += innerText + "\n";
+							}
+							else
+							{
+								var containsAllAttributes = tag.FindOptions.Attributes
+									.All(x => node.Attributes.Contains(x.Name)
+											  && node.Attributes[x.Name].Value == x.Value
+									);
+								if (containsAllAttributes)
+								{
+									string innerText = node.InnerHtml;
+									string pattern = "<.*?>";
+									innerText = Regex.Replace(innerText, pattern, "");
+									content += innerText + "\n";
+								}
+							}
+						}
+					}
+				}
+
 				var newResult = new ParserTaskPartialResult
 				{
 					ParserTaskId = parserTaskInAction.Id,
@@ -216,7 +233,8 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 					Type = ParserTaskCollectMessageTypes.Progress,
 					ParserTaskProgressMessage = new ParserTaskProgressMessage()
 					{
-						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) + (needToHandleUrls.IndexOf(url) + 1),
+						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
+											   (needToHandleUrls.IndexOf(url) + 1),
 						CompletedPartUrl = url,
 						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 							? null
@@ -226,6 +244,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 					}
 				});
 			}
+
 			await dbContext.ParserTasks
 				.Where(x => x.Id == parserTaskInAction.Id)
 				.ExecuteUpdateAsync(x => x.SetProperty(
