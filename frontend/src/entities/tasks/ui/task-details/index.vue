@@ -26,6 +26,8 @@ const isTaskResultsLoading = ref<boolean>(false);
 const isTaskResultsLoaded = ref<boolean>(false);
 
 const isTaskRunnable = computed(() => !(task?.statusId === TaskStatuses.InProgress || task?.statusId === TaskStatuses.Finished))
+const isTaskCompleted = computed(() => task.completedPartsNumber === task.allPartsNumber);
+
 
 const nexPartUrl = ref<string | null>(null);
 
@@ -43,6 +45,7 @@ onMounted(async () => {
     } else if (message.type === ParserTaskCollectMessageTypes.Progress) {
       nexPartUrl.value = message.parserTaskProgressMessage.nextPartUrl;
       task!.completedPartsNumber = message.parserTaskProgressMessage.completedPartsNumber;
+      console.log("Статус 5")
       taskResults.value.push({
         url: message.parserTaskProgressMessage.completedPartUrl,
         id: message.parserTaskProgressMessage.completedPartId,
@@ -167,7 +170,7 @@ async function downloadTaskResults(taskId: string) {
     </v-col>
   </v-row>
   <v-row class="ma-0 pa-2 d-flex flex-row justify-space-between" v-if="isTaskLoaded">
-    <div>
+    <div v-if="!isTaskCompleted">
       <v-btn class="mr-3" color="green" :disabled="!isTaskRunnable" @click="runTask(id)">
         <v-icon size="27">mdi-play-circle-outline</v-icon>
       </v-btn>
