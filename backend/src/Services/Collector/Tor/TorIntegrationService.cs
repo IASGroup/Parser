@@ -6,17 +6,17 @@ using Microsoft.Extensions.Options;
 
 namespace Collector.Tor;
 
-public class TorIntegrationService: ITorIntegrationService
+public class TorIntegrationService : ITorIntegrationService
 {
 	private readonly IOptionsSnapshot<TorOptions> torOptions;
 	private readonly HttpClient httpClient;
-	
+
 	public TorIntegrationService(IHttpClientFactory httpClientFactory, IOptionsSnapshot<TorOptions> torOptions)
 	{
 		this.torOptions = torOptions;
 		httpClient = httpClientFactory.CreateClient(HttpClientNames.Tor);
 	}
-	
+
 	public async Task<string?> DownloadAsync(TorDownloadRequestDto torDownloadRequestDto)
 	{
 		var request = new HttpRequestMessage()

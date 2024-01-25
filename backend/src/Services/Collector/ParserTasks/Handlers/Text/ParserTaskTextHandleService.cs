@@ -102,7 +102,7 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 
 				string? responseContent;
 				bool responseIsSuccess;
-				
+
 				if (parserTaskInAction.ParserTaskTorOptions is not null)
 				{
 					if ((index + 1) % parserTaskInAction.ParserTaskTorOptions.ChangeIpAddressAfterRequestsNumber == 0)
@@ -129,7 +129,7 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 				}
 
 				responseContent ??= "";
-				
+
 				if (!responseIsSuccess)
 				{
 					rabbitMqService.SendParserTaskCollectMessage(new()
@@ -165,7 +165,7 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 						ParserTaskProgressMessage = new ParserTaskProgressMessage()
 						{
 							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
-							                       (needToHandleUrls.IndexOf(url) + 1),
+												   (needToHandleUrls.IndexOf(url) + 1),
 							CompletedPartUrl = url,
 							NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 								? null
@@ -177,7 +177,7 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 					return;
 				}
 
-				string[] classesToRemove = {"ad", "advertisement", "promo"}; // Здесь список классов рекламы
+				string[] classesToRemove = { "ad", "advertisement", "promo" }; // Здесь список классов рекламы
 				string[] tagsToRemove =
 					{"script", "iframe", "img", "head", "footer", "nav", "a", "table"}; //список тегов для удаления
 				HtmlDocument doc = new HtmlDocument();
@@ -217,7 +217,7 @@ public class ParserTaskTextHandler : IParserTaskTextHandleService
 					ParserTaskProgressMessage = new ParserTaskProgressMessage()
 					{
 						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
-						                       (needToHandleUrls.IndexOf(url) + 1),
+											   (needToHandleUrls.IndexOf(url) + 1),
 						CompletedPartUrl = url,
 						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 							? null

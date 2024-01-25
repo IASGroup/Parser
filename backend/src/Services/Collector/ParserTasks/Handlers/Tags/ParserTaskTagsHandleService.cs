@@ -106,7 +106,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 
 				string? responseContent;
 				bool responseIsSuccess;
-				
+
 				if (parserTaskInAction.ParserTaskTorOptions is not null)
 				{
 					if ((index + 1) % parserTaskInAction.ParserTaskTorOptions.ChangeIpAddressAfterRequestsNumber == 0)
@@ -169,7 +169,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 						ParserTaskProgressMessage = new ParserTaskProgressMessage()
 						{
 							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
-							                       (needToHandleUrls.IndexOf(url) + 1),
+												   (needToHandleUrls.IndexOf(url) + 1),
 							CompletedPartUrl = url,
 							NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 								? null
@@ -180,7 +180,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 					});
 					return;
 				}
-				
+
 				HtmlDocument doc = new HtmlDocument();
 				doc.LoadHtml(responseContent);
 
@@ -199,11 +199,12 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 								string pattern = "<.*?>";
 								innerText = Regex.Replace(innerText, pattern, "");
 								content += innerText + "\n";
-							} else
+							}
+							else
 							{
 								var containsAllAttributes = tag.FindOptions.Attributes
 									.All(x => node.Attributes.Contains(x.Name)
-									          && node.Attributes[x.Name].Value == x.Value
+											  && node.Attributes[x.Name].Value == x.Value
 									);
 								if (containsAllAttributes)
 								{
@@ -233,7 +234,7 @@ public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 					ParserTaskProgressMessage = new ParserTaskProgressMessage()
 					{
 						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
-						                       (needToHandleUrls.IndexOf(url) + 1),
+											   (needToHandleUrls.IndexOf(url) + 1),
 						CompletedPartUrl = url,
 						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 							? null

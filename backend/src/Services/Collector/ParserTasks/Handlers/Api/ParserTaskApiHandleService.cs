@@ -125,9 +125,9 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 					responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 					responseIsSuccess = response.IsSuccessStatusCode;
 				}
-				
+
 				responseContent ??= "";
-				
+
 				if (!responseIsSuccess)
 				{
 					rabbitMqService.SendParserTaskCollectMessage(new()
@@ -163,7 +163,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 						ParserTaskProgressMessage = new ParserTaskProgressMessage()
 						{
 							CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
-							                       (needToHandleUrls.IndexOf(url) + 1),
+												   (needToHandleUrls.IndexOf(url) + 1),
 							CompletedPartUrl = url,
 							NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 								? null
@@ -191,7 +191,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 					ParserTaskProgressMessage = new ParserTaskProgressMessage()
 					{
 						CompletedPartsNumber = (allUrls.Count - needToHandleUrls.Count) +
-						                       (needToHandleUrls.IndexOf(url) + 1),
+											   (needToHandleUrls.IndexOf(url) + 1),
 						CompletedPartUrl = url,
 						NextPartUrl = needToHandleUrls.IndexOf(url) == needToHandleUrls.Count - 1
 							? null
