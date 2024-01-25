@@ -46,6 +46,7 @@ public class RunParserTaskCommandHandler : IRequestHandler<RunParserTaskCommand,
 			.Include(x => x.ParserTaskUrlOptions!.Headers)
 			.Include(x => x.ParserTaskWebsiteTagsOptions!.ParserTaskWebsiteTags)!
 				.ThenInclude(x => x.FindOptions!.Attributes)
+			.Include(x => x.ParserTaskTorOptions)
 			.FirstOrDefaultAsync(
 				predicate: x => x.Id == request.TaskId,
 				cancellationToken: cancellationToken

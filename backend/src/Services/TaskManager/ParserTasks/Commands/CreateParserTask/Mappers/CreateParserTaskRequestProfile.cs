@@ -2,6 +2,7 @@
 using Share.Tables;
 using Path = Share.Tables.Path;
 using Range = Share.Tables.Range;
+using ParserTaskTorOptions = Share.Tables.ParserTaskTorOptions;
 
 namespace TaskManager.ParserTasks.Commands.CreateParserTask.Mappers;
 
@@ -29,5 +30,7 @@ public class CreateParserTaskRequestProfile : Profile
 			.ForMember(x => x.StatusId, y => y.MapFrom(z => 0))
 			.ForMember(x => x.ParserTaskUrlOptionsId, y => y.Ignore())
 			.ForMember(x => x.ParserTaskWebsiteTagsOptionsId, y => y.Ignore());
+		CreateMap<Request.ParserTaskTorOptions, ParserTaskTorOptions>()
+			.ForMember(x => x.Id, y => y.Ignore());
 	}
 }
