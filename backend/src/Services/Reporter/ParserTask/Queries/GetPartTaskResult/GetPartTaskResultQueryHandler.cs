@@ -52,7 +52,7 @@ public class GetPartTaskResultQueryHandler : IRequestHandler<GetPartTaskResultQu
 			_logger.LogError(
 				message: errorMessage,
 				exception: e,
-				args: new {request, GetType().Name}
+				args: new { request, GetType().Name }
 			);
 			return Result<ParserTaskPartialResultDto>.Failure(errorMessage);
 		}

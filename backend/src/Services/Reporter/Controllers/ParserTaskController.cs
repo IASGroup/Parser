@@ -68,14 +68,14 @@ public class ParserTaskController : ControllerBase
 			? File(result.Value!, "text/plain", "result.txt")
 			: BadRequest(result.ErrorMessage);
 	}
-	
+
 	[HttpGet("{taskId:guid}/results/{resultId}")]
 	public async Task<ActionResult<ParserTaskPartialResultDto>> GetPartTaskResultAsync(
 		[FromRoute] Guid taskId,
 		[FromRoute] Guid resultId
 	)
 	{
-		var query = new GetPartTaskResultQuery() { TaskId = taskId,ResultId = resultId};
+		var query = new GetPartTaskResultQuery() { TaskId = taskId, ResultId = resultId };
 		var result = await _mediator.Send(query);
 		return result.IsSuccess
 			? Ok(result.Value)
