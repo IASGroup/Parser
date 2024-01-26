@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {TaskDetailsModel, TaskDetailsResultModel, TaskStatuses} from "@/entities/tasks";
+import {TaskDetailsModel, TaskDetailsResultModel, TaskPartResultModel, TaskStatuses} from "@/entities/tasks";
 import {computed, onMounted, reactive, ref} from "vue";
 import {
   GetTaskAsync,
@@ -9,7 +9,8 @@ import {
   RunTaskAsync,
   StopTaskAsync,
   DownloadPartialTaskResult,
-  DownloadTaskResults
+  DownloadTaskResults,
+  GetTaskResultAsync
 } from "@/shared/api";
 import {HubConnectionBuilder} from "@microsoft/signalr";
 import {VDataTable} from "vuetify/labs/components";
@@ -26,7 +27,7 @@ const isTaskResultsLoading = ref<boolean>(false);
 const isTaskResultsLoaded = ref<boolean>(false);
 
 const isTaskRunnable = computed(() => !(task?.statusId === TaskStatuses.InProgress || task?.statusId === TaskStatuses.Finished))
-const isTaskCompleted = computed(() => task.completedPartsNumber === task.allPartsNumber);
+const isTaskCompleted = computed(() => task!.completedPartsNumber === task!.allPartsNumber);
 
 
 const nexPartUrl = ref<string | null>(null);
@@ -103,9 +104,15 @@ const resultStatuses = [
   { name: 'Успешная загрузка', color: 'green' },
   { name: 'Не успешная загрузка', color: 'red' }
 ]
-function openResultDetails(item: TaskDetailsResultModel) {
+async function openResultDetails(item: TaskDetailsResultModel) {
+  currentTaskPatialResultLoading.value = true;
   currentTaskResult.value = item;
   isTaskResultDetailsOpened.value = true;
+  const getResult = await GetTaskResultAsync(item.parserTaskId, item.id);
+  if (getResult.isSuccess) {
+    currentTaskPatialResult.value = getResult.result!.content;
+  }
+  currentTaskPatialResultLoading.value = false;
 }
 
 async function downloadTaskResult(item: TaskDetailsResultModel) {
@@ -135,6 +142,9 @@ async function downloadTaskResults(taskId: string) {
     URL.revokeObjectURL(url);
   }
 }
+
+const currentTaskPatialResult = ref<string | null>(null);
+const currentTaskPatialResultLoading = ref<boolean>(false);
 </script>
 
 <template>
@@ -149,13 +159,14 @@ async function downloadTaskResults(taskId: string) {
           <v-chip :color="resultStatuses[currentTaskResult.statusId - 1].color">{{resultStatuses[currentTaskResult.statusId - 1].name}}</v-chip>
         </v-col>
       </v-row>
-      <v-row>
+      <v-row v-if="currentTaskPatialResultLoading">
         <v-col>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-          magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-          consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
+          <v-progress-linear color="primary" :indeterminate="true"/>
+        </v-col>
+      </v-row>
+      <v-row v-else>
+        <v-col>
+          {{ currentTaskPatialResult }}
         </v-col>
       </v-row>
     </v-card>
