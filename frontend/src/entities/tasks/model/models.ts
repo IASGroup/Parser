@@ -40,3 +40,11 @@ export type TaskDetailsResultModel = {
   url: string,
   statusId: number
 }
+
+export type TaskPartResultModel = {
+  id: string,
+  parserTaskId: string,
+  url: string,
+  statusId: number,
+  content: string
+}

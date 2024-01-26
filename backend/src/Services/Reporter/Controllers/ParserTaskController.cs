@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Reporter.ParserTask.Queries.DownloadTaskResult;
 using Reporter.ParserTask.Queries.DownloadTaskResults;
+using Reporter.ParserTask.Queries.GetPartTaskResult;
 using Reporter.ParserTask.Queries.GetTask;
 using Reporter.ParserTask.Queries.GetTaskResults;
 using Reporter.ParserTask.Queries.GetTasks;
@@ -65,6 +66,19 @@ public class ParserTaskController : ControllerBase
 		var result = await _mediator.Send(query);
 		return result.IsSuccess
 			? File(result.Value!, "text/plain", "result.txt")
+			: BadRequest(result.ErrorMessage);
+	}
+
+	[HttpGet("{taskId:guid}/results/{resultId}")]
+	public async Task<ActionResult<ParserTaskPartialResultDto>> GetPartTaskResultAsync(
+		[FromRoute] Guid taskId,
+		[FromRoute] Guid resultId
+	)
+	{
+		var query = new GetPartTaskResultQuery() { TaskId = taskId, ResultId = resultId };
+		var result = await _mediator.Send(query);
+		return result.IsSuccess
+			? Ok(result.Value)
 			: BadRequest(result.ErrorMessage);
 	}
 }
