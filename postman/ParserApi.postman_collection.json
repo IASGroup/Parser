@@ -169,7 +169,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5140/api/reports/parser-tasks/40282b03-1219-4555-a8c9-bd0202d73df5/results",
+					"raw": "http://localhost:5140/api/reports/parser-tasks/08cad526-1538-4da5-9328-d7d625734cf3/results",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -179,7 +179,7 @@
 						"api",
 						"reports",
 						"parser-tasks",
-						"40282b03-1219-4555-a8c9-bd0202d73df5",
+						"08cad526-1538-4da5-9328-d7d625734cf3",
 						"results"
 					]
 				}
@@ -282,6 +282,30 @@
 						"api",
 						"tor",
 						"setup"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetPartTaskResult",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5140/api/reports/parser-tasks/08cad526-1538-4da5-9328-d7d625734cf3/results/9fa4f85a-e9b7-49d6-b259-814d0429dee8",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5140",
+					"path": [
+						"api",
+						"reports",
+						"parser-tasks",
+						"08cad526-1538-4da5-9328-d7d625734cf3",
+						"results",
+						"9fa4f85a-e9b7-49d6-b259-814d0429dee8"
 					]
 				}
 			},
