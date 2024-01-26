@@ -16,9 +16,11 @@ const {tasks} = storeToRefs(taskStore());
 const showCreateTaskDialog = ref<boolean>(false);
 
 onMounted(async () => {
+  taskLoading.value = true;
   const getTasksResponse = await GetTasksAsync();
   if (getTasksResponse.isSuccess) tasks.value = getTasksResponse.result as Array<TaskListModel>;
   else console.log(getTasksResponse)
+  taskLoading.value = false;
 
   const hub = new HubConnectionBuilder()
     .withUrl(parserTasksHubUrl)
@@ -35,6 +37,8 @@ onMounted(async () => {
   })
   await hub.start();
 });
+
+const taskLoading = ref<boolean>(false);
 </script>
 
 <template>
@@ -51,7 +55,11 @@ onMounted(async () => {
           </v-card-actions>
         </div>
         <v-divider class="mt-5 mb-5"/>
-        <div class="d-flex justify-center mb-5">
+        <div v-if="taskLoading" class="d-flex flex-column align-center">
+          <span class="text-button mb-4">Загрузка данных</span>
+          <v-progress-linear color="primary" :indeterminate="true"/>
+        </div>
+        <div v-else class="d-flex justify-center mb-5">
           <v-list v-if="tasks.length !== 0" width="100%">
             <v-list-item v-for="task in tasks" :key="task.id">
               <task-item :task="task"/>
