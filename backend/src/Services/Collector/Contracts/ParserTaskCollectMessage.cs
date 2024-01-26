@@ -17,9 +17,11 @@ public enum ParserTaskCollectMessageTypes
 
 public class ParserTaskProgressMessage
 {
-	public string CompletedPartUrl { get; set; } = null!;
-	public string? NextPartUrl { get; set; }
-	public int CompletedPartsNumber { get; set; }
+	public required string CompletedPartUrl { get; set; } = null!;
+	public required string? NextPartUrl { get; set; }
+	public required int CompletedPartsNumber { get; set; }
+	public required Guid CompletedPartId { get; set; }
+	public required int CompletedPartStatusId { get; set; }
 }
 
 public class ParserTaskErrorMessage

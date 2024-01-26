@@ -114,6 +114,8 @@ const currentAddedAttribute = ref<{
   error: null
 })
 
+const loadingCreateTask = ref<boolean>(false);
+
 function addTagAttribute() {
   if (!currentAddedAttribute.value.name || !currentAddedAttribute.value.value) {
     currentAddedAttribute.value.error = "Значение не может быть пустым";
@@ -293,6 +295,7 @@ function removeHeader(index: number) {
 }
 
 async function createParserTask() : Promise<void> {
+  loadingCreateTask.value = true;
   const createTask : CreateTaskRequest = {
     name: taskName.value as string,
     url: taskUrl.value as string,
@@ -327,12 +330,16 @@ async function createParserTask() : Promise<void> {
             findOptions: x
           }
         })
-      }
+      },
+    parserTaskTorOptions: torOptions.value.torChangeIpPerRequest !== null ? {
+      changeIpAddressAfterRequestsNumber: torOptions.value.torChangeIpPerRequest
+    } : null
   }
   const response = await CreateTaskAsync(createTask);
   if (!response.isSuccess) {
     console.log(response);
   }
+  loadingCreateTask.value = false;
   tasks.value.push({
     name: response.result?.name as string,
     statusId: response.result?.statusId as number,
@@ -344,6 +351,47 @@ async function createParserTask() : Promise<void> {
     completedPartsNumber: 0
   });
   emit('parserTaskCreated');
+}
+
+const currentTorOptions = ref<{
+  socksPort: number | null,
+  controlPort: number | null,
+  controlPassword: string,
+  torChangeIpPerRequest: number | null,
+  torConnectionSuccess: boolean,
+  torSetupLoading: boolean
+}>({
+  socksPort: null,
+  controlPort: null,
+  controlPassword: "",
+  torChangeIpPerRequest: null,
+  torConnectionSuccess: false,
+  torSetupLoading: false
+});
+const torOptions = ref<{
+  torChangeIpPerRequest: number | null
+}>({
+  torChangeIpPerRequest: null
+});
+const showAddTorOptionsDialog = ref<boolean>(false);
+function addTorOptions() {
+  if (currentTorOptions.value.torConnectionSuccess) {
+    torOptions.value.torChangeIpPerRequest = currentTorOptions.value.torChangeIpPerRequest;
+    showAddTorOptionsDialog.value = false;
+  }
+}
+
+import {TorSetupAsync} from "@/shared/api";
+
+async function torSetup() {
+  currentTorOptions.value.torSetupLoading = true;
+  const setupResult = await TorSetupAsync(
+    <number>currentTorOptions.value.socksPort,
+    <number>currentTorOptions.value.controlPort,
+    currentTorOptions.value.controlPassword
+  );
+  if (setupResult.isSuccess) currentTorOptions.value.torConnectionSuccess = true;
+  currentTorOptions.value.torSetupLoading = false;
 }
 </script>
 
@@ -395,6 +443,21 @@ async function createParserTask() : Promise<void> {
         <v-text-field :error="currentAddedAttribute.error !== null" hide-details variant="solo" label="Название" v-model="currentAddedAttribute.name"/>
         <v-text-field :error="currentAddedAttribute.error !== null" hide-details variant="solo" label="Значение" class="ml-6" v-model="currentAddedAttribute.value"/>
         <v-btn @click="addTagAttribute" class="ml-6" color="primary">Добавить</v-btn>
+      </div>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="showAddTorOptionsDialog" class="w-75">
+    <v-card class="pa-5">
+      <v-card-title class="text-primary ma-0 pa-0">Добавление конфигурации tor</v-card-title>
+      <div class="d-flex flex-column mt-4 pa-4">
+        <div class="d-flex flex-row mb-4 align-center">
+          <v-text-field hide-details variant="solo" label="SocksPort" v-model="currentTorOptions.socksPort"/>
+          <v-text-field class="ml-10 mr-10" hide-details variant="solo" label="ControlPort" v-model="currentTorOptions.controlPort"/>
+          <v-text-field class="mr-10" hide-details variant="solo" label="ControlPassword" v-model="currentTorOptions.controlPassword"/>
+          <v-btn :prepend-icon="currentTorOptions.torConnectionSuccess ? 'mdi-check': ''" :loading="currentTorOptions.torSetupLoading" @click="torSetup" :color="currentTorOptions.torConnectionSuccess ? 'green' : 'primary'">Проверить соединение</v-btn>
+        </div>
+        <v-text-field :disabled="!currentTorOptions.torConnectionSuccess" class="mb-4" hide-details variant="solo" label="Количество запросов после которых необходимо сменить ip адрес" v-model="currentTorOptions.torChangeIpPerRequest"/>
+        <v-btn :disabled="!currentTorOptions.torConnectionSuccess" @click="addTorOptions" color="primary">Добавить</v-btn>
       </div>
     </v-card>
   </v-dialog>
@@ -472,6 +535,17 @@ async function createParserTask() : Promise<void> {
             </v-list-item>
           </v-list>
         </v-card>
+        <v-btn v-if="torOptions.torChangeIpPerRequest === null" @click="showAddTorOptionsDialog = true" width="500px" class="mb-4" color="primary">Добавить конфигурацию tor</v-btn>
+        <v-card v-else :flat="true">
+          <v-card-title>Конфигурация Tor</v-card-title>
+          <v-row class="ma-0 pa-0 d-flex align-center">
+            <v-col>
+              <v-text-field hide-details :readonly="true" persistent-placeholder variant="solo">
+                {{`SocksPort = ${currentTorOptions.socksPort}; CotrolPort = ${currentTorOptions.controlPort}; Сменять ip кадрес каждые ${currentTorOptions.torChangeIpPerRequest} запросов`}}
+              </v-text-field>
+            </v-col>
+          </v-row>
+        </v-card>
         <v-btn width="500px" v-if="headers.length === 0" @click="showAddHeaderDialog = true" color="primary">Добавить заголовок запроса</v-btn>
         <v-card v-if="tags.length !== 0 && selectedMenuTaskType === menuTaskTypes[2]" :flat="true" class="mt-4">
           <v-card-title>Теги которые необходимо спарсить</v-card-title>
@@ -499,7 +573,7 @@ async function createParserTask() : Promise<void> {
       </v-container>
       <v-spacer/>
       <v-card-actions class="pa-0 ma-0">
-        <v-btn @click="createParserTask" :block="true" color="primary" variant="flat">Создать</v-btn>
+        <v-btn @click="createParserTask" :disabled="loadingCreateTask" :loading="loadingCreateTask" :block="true" color="primary" variant="flat">Создать</v-btn>
       </v-card-actions>
     </v-card>
   </v-container>

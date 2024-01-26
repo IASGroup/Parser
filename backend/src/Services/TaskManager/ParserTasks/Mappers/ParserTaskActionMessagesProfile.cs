@@ -21,5 +21,6 @@ public class CreateParserTaskMessagesProfile : Profile
 		CreateMap<Tables.ValueItem, Action.ValueItem>();
 		CreateMap<Tables.Range, Action.Range>();
 		CreateMap<Tables.ParserTask, Action.ParserTask>();
+		CreateMap<Tables.ParserTaskTorOptions, Action.ParserTaskTorOptions>();
 	}
 }

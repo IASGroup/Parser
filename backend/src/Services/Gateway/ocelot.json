@@ -34,6 +34,19 @@
       "DownstreamHostAndPorts": [
         { "Host": "localhost", "Port": 5071 }
       ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/tor/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5221
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tor/{everything}",
+      "UpstreamHttpMethod": [ "Get","Post" ],
+      "SwaggerKey": "tor"
     }
   ],
   "SwaggerEndPoints": [
@@ -54,6 +67,16 @@
           "Name": "Task Reporter API",
           "Version": "v1",
           "Url": "http://localhost:5205/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "tor",
+      "Config": [
+        {
+          "Name": "Tor API",
+          "Version": "v1",
+          "Url": "http://localhost:5221/swagger/v1/swagger.json"
         }
       ]
     }

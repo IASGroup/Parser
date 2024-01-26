@@ -14,6 +14,14 @@ public sealed class ParserTask
 	public ParserTaskStatuses? Status { get; set; }
 	public ParserTaskWebsiteTagsOptions? ParserTaskWebsiteTagsOptions { get; set; }
 	public ParserTaskUrlOptions? ParserTaskUrlOptions { get; set; }
+
+	public ParserTaskTorOptions? ParserTaskTorOptions { get; set; }
+}
+
+public class ParserTaskTorOptions
+{
+	public Guid Id { get; set; }
+	public int ChangeIpAddressAfterRequestsNumber { get; set; }
 }
 
 public sealed class ParserTaskType

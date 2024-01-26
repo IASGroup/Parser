@@ -20,5 +20,6 @@ public class CreateParserTaskResponseProfile : Profile
 		CreateMap<Tables.ValueItem, Response.ValueItem>();
 		CreateMap<Tables.Range, Response.Range>();
 		CreateMap<Tables.ParserTask, Response.CreateParserTaskResponseDto>();
+		CreateMap<Tables.ParserTaskTorOptions, Response.ParserTaskTorOptions>();
 	}
 }

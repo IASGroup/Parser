@@ -3,23 +3,26 @@ using Collector.Contexts;
 using Collector.Contracts;
 using Collector.ParserTasks.Share;
 using Collector.RabbitMq;
-using Collector.Tor;
 using Microsoft.EntityFrameworkCore;
 using Share.Contracts;
 using Share.Tables;
+using System.Text.RegularExpressions;
+using Collector.Tor;
 using ParserTask = Share.RabbitMessages.ParserTaskAction.ParserTask;
 using ParserTaskStatuses = Share.Contracts.ParserTaskStatuses;
+using HtmlAgilityPack;
+using Share.RabbitMessages.ParserTaskAction;
 
-namespace Collector.ParserTasks.Handlers.Api;
+namespace Collector.ParserTasks.Handlers.Tags;
 
-public class ParserTaskApiHandler : IParserTaskApiHandleService
+public class ParserTaskTagsHandler : IParserTaskTagsHandleService
 {
 	private readonly IServiceProvider _serviceProvider;
 	private readonly ILogger<ParserTaskService> _logger;
 	private readonly HttpClient _httpClient;
 	private readonly IParserTaskUtilService _parserTaskUtilService;
 
-	public ParserTaskApiHandler(
+	public ParserTaskTagsHandler(
 		IServiceProvider serviceProvider,
 		ILogger<ParserTaskService> logger,
 		IHttpClientFactory httpClientFactory,
@@ -60,7 +63,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 			await dbContext.ParserTasks
 				.Where(x => x.Id == parserTaskInAction.Id)
 				.ExecuteUpdateAsync(x => x.SetProperty(
-						y => y.StatusId, (int) ParserTaskStatuses.InProgress),
+					y => y.StatusId, (int) ParserTaskStatuses.InProgress),
 					cancellationToken: cancellationToken
 				);
 			if (cancellationToken.IsCancellationRequested)
@@ -68,7 +71,6 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 				await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
 				return;
 			}
-
 			rabbitMqService.SendParserTaskCollectMessage(new()
 			{
 				ParserTaskId = parserTaskInAction.Id,
@@ -89,6 +91,9 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 				.Where(x => x.ParserTaskId == parserTaskInAction.Id && x.Url != null)
 				.Select(x => x.Url!)
 				.ToListAsync(CancellationToken.None);
+
+			var parserTags = parserTaskInAction.ParserTaskWebsiteTagsOptions.ParserTaskWebsiteTags;
+
 			var needToHandleUrls = allUrls.Except(handledUrls).ToList();
 			for (var index = 0; index < needToHandleUrls.Count; index++)
 			{
@@ -101,6 +106,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 
 				string? responseContent;
 				bool responseIsSuccess;
+
 				if (parserTaskInAction.ParserTaskTorOptions is not null)
 				{
 					if ((index + 1) % parserTaskInAction.ParserTaskTorOptions.ChangeIpAddressAfterRequestsNumber == 0)
@@ -175,12 +181,49 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 					return;
 				}
 
+				HtmlDocument doc = new HtmlDocument();
+				doc.LoadHtml(responseContent);
+
+
+				string content = "";
+				foreach (var tag in parserTags)
+				{
+					HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes($"//{tag.FindOptions.Name}");
+					if (nodes != null)
+					{
+						foreach (HtmlNode node in nodes)
+						{
+							if (!tag.FindOptions.Attributes.Any())
+							{
+								string innerText = node.InnerHtml;
+								string pattern = "<.*?>";
+								innerText = Regex.Replace(innerText, pattern, "");
+								content += innerText + "\n";
+							}
+							else
+							{
+								var containsAllAttributes = tag.FindOptions.Attributes
+									.All(x => node.Attributes.Contains(x.Name)
+											  && node.Attributes[x.Name].Value == x.Value
+									);
+								if (containsAllAttributes)
+								{
+									string innerText = node.InnerHtml;
+									string pattern = "<.*?>";
+									innerText = Regex.Replace(innerText, pattern, "");
+									content += innerText + "\n";
+								}
+							}
+						}
+					}
+				}
+
 				var newResult = new ParserTaskPartialResult
 				{
 					ParserTaskId = parserTaskInAction.Id,
 					Url = url,
 					StatusId = (int) ParserTaskPartialResultStatuses.Success,
-					Content = responseContent
+					Content = content
 				};
 				dbContext.ParserTaskPartialResults.Add(newResult);
 				await dbContext.SaveChangesAsync(cancellationToken);
@@ -205,7 +248,7 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 			await dbContext.ParserTasks
 				.Where(x => x.Id == parserTaskInAction.Id)
 				.ExecuteUpdateAsync(x => x.SetProperty(
-						y => y.StatusId, (int) ParserTaskStatuses.Finished),
+					y => y.StatusId, (int) ParserTaskStatuses.Finished),
 					cancellationToken: cancellationToken
 				);
 			rabbitMqService.SendParserTaskCollectMessage(new()
@@ -218,11 +261,6 @@ public class ParserTaskApiHandler : IParserTaskApiHandleService
 				}
 			});
 			_logger.LogInformation($"Конец задачи парсинга: {parserTaskInAction.Id}");
-		}
-		catch (TaskCanceledException e)
-		{
-			await PauseAsync(dbContext, parserTaskInAction, rabbitMqService);
-			_logger.LogInformation($"Задача парсинга остановлена: {parserTaskInAction.Id}");
 		}
 		catch (Exception e)
 		{
